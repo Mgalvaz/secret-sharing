@@ -2,6 +2,7 @@ import secrets
 import galois
 import numpy as np
 from galois import GF, Poly
+from collections.abc import Buffer
 
 from utils import *
 
@@ -34,6 +35,7 @@ class Shamir:
         self._reconstruccion = r
         self.__participaciones_anticipadas = None
         self._longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
+        int.from_bytes()
 
         """# Elegir elementos aleatorios para cada participante
         self.__participantes = []
@@ -87,7 +89,7 @@ class Shamir:
         participaciones_b64 = gf_a_b64str(polinomio(x), self._longitud_bytes)
         return list(zip((self._participantes[p-1] for p in x), participaciones_b64))
 
-    def recuperar_secreto_v1(self, participaciones: Sequence[tuple[str, str]]) -> str:
+    def recuperar_secreto_v1(self, participaciones: Sequence[tuple[str, str]]) -> Buffer:
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
@@ -195,7 +197,7 @@ class ShamirSimplificado:
         participaciones_b64 = gf_a_b64str(participaciones, self._longitud_bytes)
         return list(zip((self._participantes[p] for p in x), participaciones_b64))
 
-    def recuperar_secreto(self, participaciones: Sequence[tuple[str, str]]) -> str:
+    def recuperar_secreto(self, participaciones: Sequence[tuple[str, str]]) -> bytes:
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
@@ -210,6 +212,14 @@ class ShamirSimplificado:
 
 if __name__ == '__main__':
     gf = GF(2 ** 64)
+
+
+    a = str_a_int([input(i) for i in range(5)])
+    print(int_a_str(np.array(a)))
+
+
+    exit()
+
 
     participantes = []
     r = int(input('Escriba el parámetro de reconstrucción (nº minimo de participantes para recuperar el secreto): '))
