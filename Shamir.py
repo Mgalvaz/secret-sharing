@@ -35,33 +35,24 @@ class Shamir:
         self._reconstruccion = r
         self.__participaciones_anticipadas = None
         self._longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
-        int.from_bytes()
 
-        """# Elegir elementos aleatorios para cada participante
-        self.__participantes = []
-        for _ in range(n):
-            participante = cuerpo(secrets.randbelow(cuerpo.order))
-            while participante in self.__participantes or participante == 0:
-                participante = cuerpo(secrets.randbelow(cuerpo.order))
-            self.__participantes.append(participante)"""
-
-    def crear_anticipadas(self, anticipadas: Sequence[str]) -> list[tuple[str, str]]:
+    def crear_anticipadas(self, participantes: Sequence[str]) -> list[tuple[str, str]]:
         """
         Crea participaciones anticipadas para cada participante especificado.
         El formato de las participaciones es: (Identificador, Participación).
-        :param anticipadas: Listado de los participantes a entregar participaciones anticipadas.
+        :param participantes: Listado de los participantes a entregar participaciones anticipadas.
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
-        if  not  0 <= len(anticipadas) < self._reconstruccion:
-            raise ValueError(f'El numero de participaciones anticipadas ({len(anticipadas)}) debe estar entre 0 y el parámetro de privacidad ({self._reconstruccion - 1}).')
+        if  not  0 <= len(participantes) < self._reconstruccion:
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe estar entre 0 y el parámetro de privacidad ({self._reconstruccion - 1}).')
         aleatoriedad = []
-        for _ in range(len(anticipadas)):
+        for _ in range(len(participantes)):
             aleatoriedad.append(secrets.randbelow(self._cuerpo.order))
         aleatoriedad_b64 = int_a_b64str(aleatoriedad, self._longitud_bytes)
-        self.__participaciones_anticipadas = list(zip(anticipadas, aleatoriedad_b64))
+        self.__participaciones_anticipadas = list(zip(participantes, aleatoriedad_b64))
         return self.__participaciones_anticipadas
 
-    def crear_participaciones(self, secreto: str) -> list[tuple[str, str]]:
+    def crear_participaciones(self, secreto: Buffer) -> list[tuple[str, str]]:
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
@@ -69,7 +60,7 @@ class Shamir:
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
         """
-        secreto_i = str_a_int(secreto)
+        secreto_i = bytes_a_int(secreto)
         if self.__participaciones_anticipadas is not None:
             nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
             puntos = self._cuerpo(list(self._participantes.index(nombre) + 1 for nombre in nombres) + [0])
@@ -80,16 +71,14 @@ class Shamir:
             else:
                 polinomio = lagrange
             x = np.setdiff1d(np.arange(1, len(self._participantes) + 1), puntos)
-            #x = self.__participantes[len(puntos) - 1:]
             del self.__participaciones_anticipadas
         else:
             polinomio = Poly([*self._cuerpo.Random(self._reconstruccion-1), secreto_i], field=self._cuerpo)
             x = np.arange(1, len(self._participantes) + 1)
-            #x = self.__participantes
-        participaciones_b64 = gf_a_b64str(polinomio(x), self._longitud_bytes)
+        participaciones_b64 = int_a_b64str(polinomio(x), self._longitud_bytes)
         return list(zip((self._participantes[p-1] for p in x), participaciones_b64))
 
-    def recuperar_secreto_v1(self, participaciones: Sequence[tuple[str, str]]) -> Buffer:
+    def recuperar_secreto_v1(self, participaciones: Sequence[tuple[str, str]]) -> bytes:
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
@@ -103,9 +92,9 @@ class Shamir:
         puntos = self._cuerpo(list(self._participantes.index(nombre) + 1 for nombre in nombres))
         valores = self._cuerpo(b64str_a_int(valores_b64))
         polinomio = galois.lagrange_poly(puntos, valores)
-        return int_a_str(polinomio.coefficients(order="asc")[0], self._longitud_bytes)
+        return int_a_bytes(polinomio.coefficients(order="asc")[0])
 
-    def recuperar_secreto_v2(self, participaciones: Sequence[tuple[str, str]]) -> str:
+    def recuperar_secreto_v2(self, participaciones: Sequence[tuple[str, str]]) -> bytes:
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
@@ -124,7 +113,7 @@ class Shamir:
             denominador = np.prod(puntos[mascara[j]] - puntos[j])
             numerador = np.prod(puntos[mascara[j]])
             coef[j] = numerador / denominador
-        return int_a_str(np.sum(valores * coef), self._longitud_bytes)
+        return int_a_bytes(np.sum(valores * coef))
 
     recuperar_secreto = recuperar_secreto_v2 # Alias para recuperar secreto version 2
 
@@ -153,23 +142,23 @@ class ShamirSimplificado:
         self.__participaciones_anticipadas = None
         self._longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
 
-    def crear_anticipadas(self, anticipadas: Sequence[str]) -> list[tuple[str, str]]:
+    def crear_anticipadas(self, participantes: Sequence[str]) -> list[tuple[str, str]]:
         """
         Crea participaciones anticipadas para cada participante especificado.
         El formato de las participaciones es: (Identificador, Participación).
-        :param anticipadas: Listado de los participantes a entregar participaciones anticipadas.
+        :param participantes: Listado de los participantes a entregar participaciones anticipadas.
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
-        if  not  0 <= len(anticipadas) < len(self._participantes):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(anticipadas)}) debe estar entre 0 y el parámetro de privacidad ({len(self._participantes) - 1}).')
+        if  not 0 <= len(participantes) < len(self._participantes):
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe estar entre 0 y el parámetro de privacidad ({len(self._participantes) - 1}).')
         aleatoriedad = []
-        for _ in range(len(anticipadas)):
+        for _ in range(len(participantes)):
             aleatoriedad.append(secrets.randbelow(self._cuerpo.order))
         aleatoriedad_b64 = int_a_b64str(aleatoriedad, self._longitud_bytes)
-        self.__participaciones_anticipadas = list(zip(anticipadas, aleatoriedad_b64))
+        self.__participaciones_anticipadas = list(zip(participantes, aleatoriedad_b64))
         return self.__participaciones_anticipadas
 
-    def crear_participaciones(self, secreto: str) -> list[tuple[str, str]]:
+    def crear_participaciones(self, secreto: Buffer) -> list[tuple[str, str]]:
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
@@ -177,14 +166,13 @@ class ShamirSimplificado:
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
         """
-        secreto_i = str_a_int(secreto)
+        secreto_i = bytes_a_int(secreto)
         if self.__participaciones_anticipadas is not None:
             nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
-            puntos = self._cuerpo(list(self._participantes.index(nombre) for nombre in nombres))
             valores = self._cuerpo(b64str_a_int(valores_b64))
-            x = np.setdiff1d(np.arange(len(self._participantes)), puntos)
+            x = np.setdiff1d(self._participantes, nombres)
             participaciones = self._cuerpo.Zeros(len(x))
-            for i, punto in enumerate(x[:-1]):
+            for i in range(len(x)):
                 participaciones[i] = secrets.randbelow(self._cuerpo.order)
             participaciones[-1] = self._cuerpo(secreto_i) - participaciones[:-1].sum() - valores.sum()
             del self.__participaciones_anticipadas
@@ -194,7 +182,7 @@ class ShamirSimplificado:
             for i, punto in enumerate(x[:-1]):
                 participaciones[i] = secrets.randbelow(self._cuerpo.order)
             participaciones[-1] = self._cuerpo(secreto_i) - participaciones[:-1].sum()
-        participaciones_b64 = gf_a_b64str(participaciones, self._longitud_bytes)
+        participaciones_b64 = int_a_b64str(participaciones, self._longitud_bytes)
         return list(zip((self._participantes[p] for p in x), participaciones_b64))
 
     def recuperar_secreto(self, participaciones: Sequence[tuple[str, str]]) -> bytes:
