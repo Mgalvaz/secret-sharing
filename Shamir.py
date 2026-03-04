@@ -177,13 +177,13 @@ class ShamirSimplificado:
             participaciones[-1] = self._cuerpo(secreto_i) - participaciones[:-1].sum() - valores.sum()
             del self.__participaciones_anticipadas
         else:
-            x = np.arange(len(self._participantes))
+            x = self._participantes
             participaciones = self._cuerpo.Zeros(len(x))
-            for i, punto in enumerate(x[:-1]):
+            for i in range(len(x) -1):
                 participaciones[i] = secrets.randbelow(self._cuerpo.order)
-            participaciones[-1] = self._cuerpo(secreto_i) - participaciones[:-1].sum()
+            participaciones[-1] = self._cuerpo(secreto_i) - participaciones.sum()
         participaciones_b64 = int_a_b64str(participaciones, self._longitud_bytes)
-        return list(zip((self._participantes[p] for p in x), participaciones_b64))
+        return list(zip(x, participaciones_b64))
 
     def recuperar_secreto(self, participaciones: Sequence[tuple[str, str]]) -> bytes:
         """
@@ -196,18 +196,10 @@ class ShamirSimplificado:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
         _, valores_b64 = zip(*participaciones[:len(self._participantes)])
         valores = self._cuerpo(b64str_a_int(valores_b64))
-        return int_a_str(valores.sum(), self._longitud_bytes)
+        return int_a_bytes(valores.sum())
 
 if __name__ == '__main__':
     gf = GF(2 ** 64)
-
-
-    a = str_a_int([input(i) for i in range(5)])
-    print(int_a_str(np.array(a)))
-
-
-    exit()
-
 
     participantes = []
     r = int(input('Escriba el parámetro de reconstrucción (nº minimo de participantes para recuperar el secreto): '))
@@ -232,7 +224,7 @@ if __name__ == '__main__':
             print(f'{nombre}: {ant_b64}')
 
 
-    secreto = input('Escriba el secreto: ')
+    secreto = input('Escriba el secreto: ').encode()
     participantes = sh.crear_participaciones(secreto)
     for nombre, part_b64 in participantes:
         print(f'{nombre}: {part_b64}')
@@ -245,6 +237,6 @@ if __name__ == '__main__':
         conjunto.append((nombre, participacion))
 
     secreto = sh.recuperar_secreto(conjunto)
-    print('secreto:', secreto)
+    print('secreto:', secreto.decode())
 
 
