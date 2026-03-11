@@ -5,7 +5,7 @@ from typing import Sequence
 import numpy as np
 from galois.typing import ArrayLike
 
-def bytes_a_int(cadena: Buffer | list[Buffer]) -> int | list[int]:
+def bytes_a_int(cadena: Buffer | Sequence[Buffer]) -> int | list[int]:
     """
     Obtiene la representacion en entero de un string.
     Si se proporciona una secuencia de strings, devuelve una lista de las representaciones de cada cadena.
