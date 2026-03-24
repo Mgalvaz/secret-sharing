@@ -25,12 +25,16 @@ class Shamir:
         """
 
         # Verificación de condiciones
-        if cuerpo.order <= len(participantes) < 2:
-            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser mayor que 1 y menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
+        if cuerpo.order <= len(participantes):
+            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
+        if len(participantes) < 2:
+            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser mayor que 1.')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
-        if len(participantes) < r < 2:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser mayor que 1 y menor o igual que el número de participantes ({len(participantes)}).')
+        if len(participantes) < r:
+            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
+        if r < 2:
+            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser mayor que 1.')
 
         self._cuerpo = cuerpo
         self._reconstruccion = r
@@ -51,8 +55,10 @@ class Shamir:
         """
 
         # Verificación de condiciones
-        if  not  0 <= len(participantes) < self._reconstruccion:
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe estar entre 0 y el parámetro de privacidad ({self._reconstruccion - 1}).')
+        if len(participantes) < 1:
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe ser al menos 1.')
+        if self._reconstruccion - 1 < len(participantes):
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe ser menor o igual que el parámetro de privacidad ({self._reconstruccion - 1})')
         self._verificar_nombres(participantes)
 
         # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
@@ -82,14 +88,14 @@ class Shamir:
             # Se determina un polinomio de grado r-1 compatible con las participaciones anticipadas
             lagrange = lagrange_poly(puntos, valores)
             if len(puntos) < self._reconstruccion - 1: # Si el número de participaciones anticipadas es menor que r-1, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(puntos, field=self._cuerpo)*Poly.Random(self._reconstruccion - len(puntos) - 1, field=self._cuerpo)
+                polinomio = lagrange + Poly.Roots(puntos, field=self._cuerpo)*Poly([secrets.randbelow(self._cuerpo.order) for _ in range(self._reconstruccion - len(puntos) - 1)], field=self._cuerpo)
             else: # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
             del self.__participaciones_anticipadas # Eliminación de las participaciones anticipadas para mayor seguridad
 
         # Si no, se sigue el proceso estándar
         else:
-            polinomio = Poly([*self._cuerpo.Random(self._reconstruccion-1), secreto_i], field=self._cuerpo)
+            polinomio = Poly([secreto_i, *(secrets.randbelow(self._cuerpo.order) for _ in range(self._reconstruccion - 1))], field=self._cuerpo, order='asc')
             x = list(self._participantes_numero.values())
 
         # Generar el resto de las participaciones
@@ -184,8 +190,10 @@ class ShamirSimplificado:
         """
 
         # Verificación de condiciones
-        if cuerpo.order <= len(participantes) < 2:
-            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser mayor que 1 y menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
+        if cuerpo.order <= len(participantes):
+            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
+        if len(participantes) < 2:
+            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser mayor que 1.')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
 
@@ -202,8 +210,11 @@ class ShamirSimplificado:
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
         # Verificación de condiciones
-        if  not 0 <= len(participantes) < len(self._participantes):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe estar entre 0 y el parámetro de privacidad ({len(self._participantes) - 1}).')
+        # Verificación de condiciones
+        if len(participantes) < 1:
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe ser al menos 1.')
+        if len(self._participantes) < len(participantes):
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe ser menor o igual que el parámetro de privacidad ({len(self._participantes) - 1})')
         self._verificar_nombres(participantes)
 
         # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
