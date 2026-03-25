@@ -135,22 +135,23 @@ class Shamir:
         """
 
         # Verificación de condiciones
-        if len(participaciones) < self._reconstruccion:
+        r = self._reconstruccion
+        if len(participaciones) < r:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
-        nombres, valores_b64 = zip(*participaciones[:self._reconstruccion])
+        nombres, valores_b64 = zip(*participaciones[:r])
         self._verificar_nombres(nombres)
 
         # Obtener el elemento asociado a cada participante y decodificar su participación
         puntos = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres))
         valores = self._cuerpo(b64str_a_int(valores_b64))
 
-        # Calcular el valor del polinomio generador el el 0 sin reconstruirlo
-        mascara = ~np.eye(self._reconstruccion, dtype=bool) # Máscara de los elementos x_h de la fórmula
-        coef = self._cuerpo.Zeros(self._reconstruccion)
-        for j in range(self._reconstruccion):
-            denominador = np.prod(puntos[mascara[j]] - puntos[j]) # Productorio del denominador
-            numerador = np.prod(puntos[mascara[j]]) # Productorio del numinador
-            coef[j] = numerador / denominador # Cálculo de l_j
+        # Calcular el valor del polinomio generador en 0 sin reconstruirlo
+        mascara = ~np.eye(r, dtype=bool) # Máscara de los elementos x_h de la fórmula
+        puntos_matriz = np.broadcast_to(puntos, (r, r)) # Se crea una matriz que cada fila es el array puntos
+        puntos_matriz = puntos_matriz[mascara].reshape(r - 1, r) # Al usar la mascara, la matriz se aplana por lo que hay que usar reshape (trabajaremos por columnas)
+        denominador = np.prod(puntos_matriz - puntos, axis=0) # Productorio del denominador
+        numerador = np.prod(puntos_matriz, axis=0) # Productorio del numerador
+        coef = numerador / denominador # Cálculo de l_j
         return int_a_bytes(np.sum(valores * coef)) # Se devuelve la suma y_j * l_j
 
     recuperar_secreto = recuperar_secreto_v2 # Alias para recuperar secreto version 2
@@ -329,7 +330,7 @@ if __name__ == '__main__':
         participacion = input('Participacion: ')
         conjunto.append((nombre, participacion))
 
-    secreto = sh.recuperar_secreto(conjunto)
+    secreto = sh.recuperar_secreto_v2(conjunto)
     print('secreto:', secreto.decode())
 
 

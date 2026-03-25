@@ -124,7 +124,6 @@ class ShamirRampa:
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
-        Esta versión reconstruye primero el polinomio generador y a partir de él, devuelve el secreto.
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto.
         """
@@ -202,7 +201,7 @@ class McElieceSarwate:
         self._longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
         self._participantes_nombre: list[str | None] = [None] * l  # Array para pasar de numero -> nombre
         self._participantes_numero = {}  # Diccionario para pasar nombre -> numero
-        for i, nombre in enumerate(participantes, 1):
+        for i, nombre in enumerate(participantes, l):
             self._participantes_nombre.append(nombre)
             self._participantes_numero[nombre] = i
 
@@ -267,14 +266,14 @@ class McElieceSarwate:
             # Hay que construir un polinomio que interpole al secreto en sus respectivos puntos y que sea de grado r - 1
             puntos_secreto = self._cuerpo(np.arange(self._longitud_secreto))
             lagrange = lagrange_poly(puntos_secreto, secreto_i)
-            polinomio = lagrange + Poly.Roots(puntos_secreto, field=self._cuerpo) * Poly([secrets.randbelow(self._cuerpo.order) for _ in range(self._reconstruccion - len(puntos_secreto) - 1)], field=self._cuerpo)
+            polinomio = lagrange + Poly.Roots(puntos_secreto, field=self._cuerpo) * Poly([secrets.randbelow(self._cuerpo.order) for _ in range(self._reconstruccion - len(puntos_secreto))], field=self._cuerpo)
 
             # Generar el resto de las participaciones
             participaciones_b64 = int_a_b64str(polinomio(x), self._longitud_bytes)
 
         return list(zip((self._participantes_nombre[p] for p in x.tolist()), participaciones_b64))
 
-    def recuperar_secreto(self, participaciones: Sequence[tuple[str, str]]) -> list[bytes]:
+    def recuperar_secreto_v1(self, participaciones: Sequence[tuple[str, str]]) -> list[bytes]:
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
@@ -295,7 +294,48 @@ class McElieceSarwate:
 
         # Reconstruir el polinomio generador y el secreto como su coeficiente independiente
         polinomio = lagrange_poly(puntos, valores)
-        return int_a_bytes(polinomio.coefficients(order="asc")[:self._longitud_secreto])
+        return int_a_bytes(polinomio(np.arange(self._longitud_secreto)))
+
+    def recuperar_secreto_v2(self, participaciones: Sequence[tuple[str, str]]) -> list[bytes]:
+        """
+        Reconstruye el secreto codificado en las participaciones proporcionadas.
+        El formato de las participaciones es: (Identificador, Participación).
+        Esta versión reconstruye el secreto a partir de la fórmula del polinomio interpolador de Lagrange evaluado en 0, ..., l-1.
+        :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
+        :return: El secreto.
+        """
+
+        # Verificación de condiciones
+        r = self._reconstruccion
+        if len(participaciones) < r:
+            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
+        nombres, valores_b64 = zip(*participaciones[:r])
+        self._verificar_nombres(nombres)
+
+        # Obtener el elemento asociado a cada participante y decodificar su participación
+        puntos = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres))
+        valores = self._cuerpo(b64str_a_int(valores_b64))
+
+        # Calcular el valor del polinomio generador en 0, ..., l-1 sin reconstruirlo
+        """Opcion solo numpy
+        mascara = ~np.eye(r, dtype=bool)  # Máscara de los elementos x_h de la fórmula
+        puntos_matriz = np.broadcast_to(puntos, (r, r))  # Se crea una matriz que cada fila es el array puntos
+        puntos_matriz = puntos_matriz[mascara].reshape(r - 1, r)  # Al usar la mascara, la matriz se aplana por lo que hay que usar reshape (trabajaremos por columnas)
+        denominador = np.prod(puntos_matriz - puntos, axis=0)  # Productorio del denominador
+
+        numerador = np.prod(puntos_matriz - self._cuerpo(np.arange(self._longitud_secreto))[:, None, None], axis=1)  # Productorio del numerador
+        coef = numerador / denominador  # Cálculo de l_i(a_j)
+        return int_a_bytes(np.sum(valores * coef, axis=1))  # Se devuelve la suma y_i * l_i(a_j)"""
+        # Calcular el valor del polinomio generador en 0, ..., l-1 sin reconstruirlo
+        mascara = ~np.eye(self._reconstruccion, dtype=bool)  # Máscara de los elementos x_h de la fórmula
+        coef = self._cuerpo.Zeros((self._longitud_secreto, self._reconstruccion))
+        for i in range(self._reconstruccion):
+            denominador = np.prod(puntos[i] - puntos[mascara[i]])  # Productorio del denominador
+            numerador = np.prod(self._cuerpo(np.arange(self._longitud_secreto))[:, None] - puntos[mascara[i]], axis=1)  # Productorio del numerador
+            coef[:, i] = numerador / denominador  # Cálculo de l_i
+        return int_a_bytes(np.sum(valores * coef, axis=1))  # Se devuelve la suma y_i * l_i(a_j)
+
+    recuperar_secreto = recuperar_secreto_v2  # Alias para recuperar secreto version 2
 
     def _verificar_nombres(self, nombres: Sequence[str]) -> None:
         """
@@ -322,7 +362,7 @@ if __name__ == '__main__':
         part = input(f'Escriba el nombre del participante nº{i+1}: ')
         participantes.append(part)
 
-    sh = ShamirRampa(gf, r, l, participantes)
+    sh = McElieceSarwate(gf, r, l, participantes)
 
     yn = input('Desea repartir participación anticipada? (y/n): ')
     if yn.lower() in ('si', 's', 'y', 'yes'):
@@ -351,5 +391,5 @@ if __name__ == '__main__':
         participacion = input('Participacion: ')
         conjunto.append((nombre, participacion))
 
-    secreto = sh.recuperar_secreto(conjunto)
+    secreto = sh.recuperar_secreto_v2(conjunto)
     print('secreto:', [s.decode() for s in secreto])
