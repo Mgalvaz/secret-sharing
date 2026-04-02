@@ -1,6 +1,8 @@
-import secrets
-
+import numpy as np
 from galois import GF, Poly, lagrange_poly
+
+from typing import Sequence
+from collections.abc import Buffer
 
 from utils import *
 
@@ -14,8 +16,8 @@ class ShamirRampa:
 
             .. ipython:: python
 
-                gf = galois.GF(3**5)
-                rsh = ShamirRampa(gf, 4, 3, ['a', 'b', 'c', 'd', 'e', 'f'])
+                cuerpo = galois.GF(3**5)
+                rsh = ShamirRampa(cuerpo, 4, 3, ['a', 'b', 'c', 'd', 'e', 'f'])
         """
 
     def __init__(self, cuerpo: GF, r: int, l: int,  participantes: Sequence[str]):
@@ -54,32 +56,32 @@ class ShamirRampa:
             self._participantes_nombre.append(nombre)
             self._participantes_numero[nombre] = i
 
-    def crear_anticipadas(self, participantes: Sequence[str]) -> list[tuple[str, str]]:
+    def crear_anticipadas(self, participantes_anticipados: Sequence[str]) -> list[tuple[str, str]]:
         """
-        Crea participaciones anticipadas para cada participante especificado.
+        Crea participaciones participantes_anticipados para cada participante especificado.
         El formato de las participaciones es: (Identificador, Participación).
-        :param participantes: Listado de los participantes a entregar participaciones anticipadas.
-        :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
+        :param participantes_anticipados: Listado de los participantes a entregar participaciones participantes_anticipados.
+        :return: Una lista que contienene las participaciones participantes_anticipados asignadas a cada participante especificado.
         """
 
         # Verificación de condiciones
-        if len(participantes) < 1:
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe ser al menos 1.')
-        if self._reconstruccion - self._longitud_secreto < len(participantes):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe ser menor o igual que el parámetro de privacidad ({self._reconstruccion - self._longitud_secreto})')
-        self._verificar_nombres(participantes)
+        if len(participantes_anticipados) < 1:
+            raise ValueError(f'El numero de participaciones participantes_anticipados ({len(participantes_anticipados)}) debe ser al menos 1.')
+        if self._reconstruccion - self._longitud_secreto < len(participantes_anticipados):
+            raise ValueError(f'El numero de participaciones participantes_anticipados ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self._reconstruccion - self._longitud_secreto})')
+        self._verificar_nombres(participantes_anticipados)
 
-        # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
-        aleatoriedad = [secrets.randbelow(self._cuerpo.order) for _ in range(len(participantes))]
+        # Generar las participaciones participantes_anticipados, que son elementos aleatorios del cuerpo
+        aleatoriedad = array_aleatorio(self._cuerpo.order, len(participantes_anticipados))
         aleatoriedad_b64 = int_a_b64str(aleatoriedad, self._longitud_bytes)
-        self.__participaciones_anticipadas = list(zip(participantes, aleatoriedad_b64))
+        self.__participaciones_anticipadas = list(zip(participantes_anticipados, aleatoriedad_b64))
         return self.__participaciones_anticipadas
 
     def crear_participaciones(self, secreto: Sequence[Buffer]) -> list[tuple[str, str]]:
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
-        Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
+        Si se han distribuido participaciones participantes_anticipados, las participaciones serán coherentes con las mismas.
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
         """
@@ -90,29 +92,29 @@ class ShamirRampa:
 
         secreto_i = bytes_a_int(secreto)
 
-        # Si se han repartido participaciones anticipadas, se realiza compartición avanzada
+        # Si se han repartido participaciones participantes_anticipados, se realiza compartición avanzada
         if self.__participaciones_anticipadas is not None:
             # Obtener el elemento asociado a cada participante y decodificar su participación
             nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
-            puntos = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres))
-            valores = self._cuerpo(b64str_a_int(valores_b64))
-            x = self._cuerpo(np.setdiff1d(np.arange(1, len(self._participantes_nombre)), puntos))
+            puntos_anticipados = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres))
+            valores_anticipados = self._cuerpo(b64str_a_int(valores_b64))
+            x = self._cuerpo(np.setdiff1d(np.arange(1, len(self._participantes_nombre)), puntos_anticipados))
 
-            # Se determina un polinomio de grado r-1 compatible con las participaciones anticipadas
+            # Se determina un polinomio de grado r-1 compatible con las participaciones participantes_anticipados
             polinomio_secreto = Poly(secreto_i, field=self._cuerpo, order='asc')
-            lagrange = lagrange_poly(puntos, (valores - polinomio_secreto(puntos))/puntos**self._longitud_secreto)
-            if len(puntos) < self._reconstruccion - self._longitud_secreto - 1:  # Si el número de participaciones anticipadas es menor que r-l-1, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(puntos, field=self._cuerpo) * Poly([secrets.randbelow(self._cuerpo.order) for _ in range(self._reconstruccion - len(puntos) - 1)], field=self._cuerpo)
+            lagrange = lagrange_poly(puntos_anticipados, (valores_anticipados - polinomio_secreto(puntos_anticipados)) / puntos_anticipados ** self._longitud_secreto)
+            if len(puntos_anticipados) < self._reconstruccion - self._longitud_secreto - 1:  # Si el número de participaciones participantes_anticipados es menor que r-l-1, hay que completar el polinomio con aleatoriedad
+                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self._cuerpo) * polinomio_aleatorio(self._cuerpo, self._reconstruccion - len(puntos_anticipados) - 1)
             else:  # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
-            del self.__participaciones_anticipadas  # Eliminación de las participaciones anticipadas para mayor seguridad
+            del self.__participaciones_anticipadas  # Eliminación de las participaciones participantes_anticipados para mayor seguridad
 
             # Generar el resto de las participaciones
             participaciones_b64 = int_a_b64str(polinomio_secreto(x) + x**self._longitud_secreto * polinomio(x), self._longitud_bytes)
 
         # Si no, se sigue el proceso estándar
         else:
-            polinomio = Poly([*secreto_i, *(secrets.randbelow(self._cuerpo.order) for _ in range(self._reconstruccion - self._longitud_secreto))], field=self._cuerpo, order='asc')
+            polinomio = Poly(secreto_i + array_aleatorio(self._cuerpo.order, self._reconstruccion - self._longitud_secreto), field=self._cuerpo, order='asc')
             x = np.arange(1, len(self._participantes_nombre))
 
             # Generar el resto de las participaciones
@@ -165,8 +167,8 @@ class McElieceSarwate:
 
             .. ipython:: python
 
-                gf = galois.GF(3**5)
-                rsh = McElieceSarwate(gf, 4, 3, ['a', 'b', 'c', 'd', 'e', 'f'])
+                cuerpo = galois.GF(3**5)
+                rsh = McElieceSarwate(cuerpo, 4, 3, ['a', 'b', 'c', 'd', 'e', 'f'])
         """
 
     def __init__(self, cuerpo: GF, r: int, l: int,  participantes: Sequence[str]):
@@ -205,32 +207,32 @@ class McElieceSarwate:
             self._participantes_nombre.append(nombre)
             self._participantes_numero[nombre] = i
 
-    def crear_anticipadas(self, participantes: Sequence[str]) -> list[tuple[str, str]]:
+    def crear_anticipadas(self, participantes_anticipados: Sequence[str]) -> list[tuple[str, str]]:
         """
-        Crea participaciones anticipadas para cada participante especificado.
+        Crea participaciones participantes_anticipados para cada participante especificado.
         El formato de las participaciones es: (Identificador, Participación).
-        :param participantes: Listado de los participantes a entregar participaciones anticipadas.
-        :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
+        :param participantes_anticipados: Listado de los participantes a entregar participaciones participantes_anticipados.
+        :return: Una lista que contienene las participaciones participantes_anticipados asignadas a cada participante especificado.
         """
 
         # Verificación de condiciones
-        if len(participantes) < 1:
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe ser al menos 1.')
-        if self._reconstruccion - self._longitud_secreto < len(participantes):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes)}) debe ser menor o igual que el parámetro de privacidad ({self._reconstruccion - self._longitud_secreto})')
-        self._verificar_nombres(participantes)
+        if len(participantes_anticipados) < 1:
+            raise ValueError(f'El numero de participaciones participantes_anticipados ({len(participantes_anticipados)}) debe ser al menos 1.')
+        if self._reconstruccion - self._longitud_secreto < len(participantes_anticipados):
+            raise ValueError(f'El numero de participaciones participantes_anticipados ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self._reconstruccion - self._longitud_secreto})')
+        self._verificar_nombres(participantes_anticipados)
 
-        # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
-        aleatoriedad = [secrets.randbelow(self._cuerpo.order) for _ in range(len(participantes))]
+        # Generar las participaciones participantes_anticipados, que son elementos aleatorios del cuerpo
+        aleatoriedad = array_aleatorio(self._cuerpo.order, len(participantes_anticipados))
         aleatoriedad_b64 = int_a_b64str(aleatoriedad, self._longitud_bytes)
-        self.__participaciones_anticipadas = list(zip(participantes, aleatoriedad_b64))
+        self.__participaciones_anticipadas = list(zip(participantes_anticipados, aleatoriedad_b64))
         return self.__participaciones_anticipadas
 
     def crear_participaciones(self, secreto: Sequence[Buffer]) -> list[tuple[str, str]]:
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
-        Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
+        Si se han distribuido participaciones participantes_anticipados, las participaciones serán coherentes con las mismas.
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
         """
@@ -239,34 +241,35 @@ class McElieceSarwate:
         if len(secreto) != self._longitud_secreto:
             raise ValueError(f'Se esperaba un secreto de longitud {self._longitud_secreto}, pero se ha recibido uno de longitud {len(secreto)}.')
         secreto_i = self._cuerpo(bytes_a_int(secreto))
+        puntos_secreto = self._cuerpo(np.arange(self._longitud_secreto))
 
-        # Si se han repartido participaciones anticipadas, se realiza compartición avanzada
+        # Si se han repartido participaciones participantes_anticipados, se realiza compartición avanzada
         if self.__participaciones_anticipadas is not None:
             # Obtener el elemento asociado a cada participante y decodificar su participación
-            nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
-            puntos = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres))
-            valores = self._cuerpo(b64str_a_int(valores_b64))
-            x = self._cuerpo(np.setdiff1d(list(self._participantes_numero.values()), puntos))
+            nombres_anticipados, valores_anticipados_b64 = zip(*self.__participaciones_anticipadas)
+            puntos_anticipados = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres_anticipados))
+            valores_anticipados = self._cuerpo(b64str_a_int(valores_anticipados_b64))
+            x = self._cuerpo(np.setdiff1d(list(self._participantes_numero.values()), puntos_anticipados))
 
-            # Se determina un polinomio de grado r-1 compatible con las participaciones anticipadas
-            polinomio_secreto = Poly(secreto_i, field=self._cuerpo, order='asc')
-            lagrange = lagrange_poly(puntos, (valores - polinomio_secreto(puntos))/puntos**self._longitud_secreto)
-            if len(puntos) < self._reconstruccion - self._longitud_secreto - 1:  # Si el número de participaciones anticipadas es menor que r-l-1, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(puntos, field=self._cuerpo) * Poly([secrets.randbelow(self._cuerpo.order) for _ in range(self._reconstruccion - len(puntos) - 1)], field=self._cuerpo)
+            # Se determina un polinomio de grado r-1 compatible con las participaciones participantes_anticipados
+            puntos_lagrange = self._cuerpo(np.concatenate([puntos_secreto, puntos_anticipados]))
+            valores_lagrange = self._cuerpo(np.concatenate([secreto_i, valores_anticipados]))
+            lagrange = lagrange_poly(puntos_lagrange, valores_lagrange)
+            if len(puntos_anticipados) < self._reconstruccion - self._longitud_secreto - 1:  # Si el número de participaciones participantes_anticipados es menor que r-l-1, hay que completar el polinomio con aleatoriedad
+                polinomio = lagrange + Poly.Roots(np.concatenate([puntos_secreto, puntos_anticipados]), field=self._cuerpo) * polinomio_aleatorio(self._cuerpo, self._reconstruccion - len(puntos_secreto) - len(puntos_anticipados))
             else:  # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
-            del self.__participaciones_anticipadas  # Eliminación de las participaciones anticipadas para mayor seguridad
+            del self.__participaciones_anticipadas  # Eliminación de las participaciones participantes_anticipados para mayor seguridad
 
             # Generar el resto de las participaciones
-            participaciones_b64 = int_a_b64str(polinomio_secreto(x) + x**self._longitud_secreto * polinomio(x), self._longitud_bytes)
+            participaciones_b64 = int_a_b64str(polinomio(x), self._longitud_bytes)
 
         # Si no, se sigue el proceso estándar
         else:
             x = np.arange(self._longitud_secreto, len(self._participantes_nombre))
             # Hay que construir un polinomio que interpole al secreto en sus respectivos puntos y que sea de grado r - 1
-            puntos_secreto = self._cuerpo(np.arange(self._longitud_secreto))
             lagrange = lagrange_poly(puntos_secreto, secreto_i)
-            polinomio = lagrange + Poly.Roots(puntos_secreto, field=self._cuerpo) * Poly([secrets.randbelow(self._cuerpo.order) for _ in range(self._reconstruccion - len(puntos_secreto))], field=self._cuerpo)
+            polinomio = lagrange + Poly.Roots(puntos_secreto, field=self._cuerpo) * polinomio_aleatorio(self._cuerpo, self._reconstruccion - len(puntos_secreto))
 
             # Generar el resto de las participaciones
             participaciones_b64 = int_a_b64str(polinomio(x), self._longitud_bytes)
@@ -350,46 +353,3 @@ class McElieceSarwate:
         for nombre in nombres:
             if nombre not in conjunto_nombres:
                 raise ValueError(f"El participante {nombre} no está registrado.")
-
-if __name__ == '__main__':
-    gf = GF(2 ** 64)
-
-    participantes = []
-    r = int(input('Escriba el parámetro de reconstrucción (nº minimo de participantes para recuperar el secreto): '))
-    l = int(input('Escriba la longitud del secreto: '))
-    n = int(input('Escriba el número de particiantes: '))
-    for i in range(n):
-        part = input(f'Escriba el nombre del participante nº{i+1}: ')
-        participantes.append(part)
-
-    sh = McElieceSarwate(gf, r, l, participantes)
-
-    yn = input('Desea repartir participación anticipada? (y/n): ')
-    if yn.lower() in ('si', 's', 'y', 'yes'):
-        n_anticipados = int(input('Introduzca el número de participaciones anticipadas: '))
-        anticipadas = []
-        for i in range(n_anticipados):
-            part_ant = input(f'Escriba el nombre del participante anticipado nº{i+1}: ')
-            anticipadas.append(part_ant)
-        participaciones_anticipadas = sh.crear_anticipadas(anticipadas)
-        for nombre, ant_b64 in participaciones_anticipadas:
-            print(f'{nombre}: {ant_b64}')
-
-
-    secreto = []
-    for i in range(l):
-        part = input(f'Escriba el secreto nº{i+1}: ').encode()
-        secreto.append(part)
-    participantes = sh.crear_participaciones(secreto)
-    for nombre, part_b64 in participantes:
-        print(f'{nombre}: {part_b64}')
-
-    print('Escriba el nombre de los participantes que busca reconstruir el secreto y su participacion.')
-    conjunto = []
-    for _ in range(r):
-        nombre = input('Nombre: ')
-        participacion = input('Participacion: ')
-        conjunto.append((nombre, participacion))
-
-    secreto = sh.recuperar_secreto_v2(conjunto)
-    print('secreto:', [s.decode() for s in secreto])

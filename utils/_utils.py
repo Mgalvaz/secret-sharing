@@ -1,9 +1,11 @@
+import secrets
+import numpy as np
 from base64 import b64decode, b64encode
+from galois import  Poly, GF
+
+from galois.typing import ArrayLike
 from collections.abc import Buffer
 from typing import Sequence
-
-import numpy as np
-from galois.typing import ArrayLike
 
 def bytes_a_int(cadena: Buffer | Sequence[Buffer]) -> int | list[int]:
     """
@@ -62,3 +64,21 @@ def b64str_a_int(lista_b64: list[str]) -> list[int]:
     :return: La lista con la decodificación de cada string.
     """
     return list(int.from_bytes(b64decode(str_b64)) for str_b64 in lista_b64)
+
+def array_aleatorio(sup: int, n:int) -> list[int]:
+    """
+    Devuelve un array de longitud n con números aleatorios criptograficamente seguros en el rango [0, sup).
+    :param sup: Cota superior (no incluida) para los números aleatorios.
+    :param n: La cabtidad de números deseado.
+    :return: El array de números aleatorios.
+    """
+    return [secrets.randbelow(sup) for _ in range(n)]
+
+def polinomio_aleatorio(cuerpo: GF, num_coeffs: int) -> Poly:
+    """
+    Construye un polinomio aleatorio criptográficamente seguro sobre un cuerpo.
+    :param cuerpo: Cuerpo sobre el que se construye el polinomio.
+    :param num_coeffs: El número de coeficientes del polinomio. Equivalentemente, el grado del polinomio más 1.
+    :return: El polinomio aleatorio.
+    """
+    return Poly([secrets.randbelow(cuerpo.order) for _ in range(num_coeffs)], field=cuerpo)
