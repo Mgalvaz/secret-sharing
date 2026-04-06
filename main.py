@@ -90,11 +90,16 @@ if yn.lower() in ('si', 's', 'y', 'yes'):
 # Pedir el secreto y codificarlo
 if l == 1:
     secreto = input(f'Escriba el secreto: ').encode()
+    while len(secreto) > 8:
+        secreto = input('Se ha introducido un secreto con longitud de bytes mayor que 8, introduzca otro: ').encode()
 else:
     secreto = []
     for i in range(l):
-        participante = input(f'Escriba el secreto nº{i + 1}: ').encode()
-        secreto.append(participante)
+        sec = input(f'Escriba el secreto nº{i + 1}: ').encode()
+        while len(sec) > 8:
+            sec = input(
+                'Se ha introducido un secreto con longitud de bytes mayor que 8, introduzca otro: ').encode()
+        secreto.append(sec)
 
 # Crear participaciones
 participaciones = ss.crear_participaciones(secreto)
