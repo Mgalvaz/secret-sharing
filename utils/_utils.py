@@ -4,17 +4,16 @@ from base64 import b64decode, b64encode
 from galois import  Poly, GF
 
 from galois.typing import ArrayLike
-from collections.abc import Buffer
 from typing import Sequence
 
-def bytes_a_int(cadena: Buffer | Sequence[Buffer]) -> int | list[int]:
+def bytes_a_int(cadena: bytes | Sequence[bytes]) -> int | list[int]:
     """
     Obtiene la representacion en entero de un string.
     Si se proporciona una secuencia de strings, devuelve una lista de las representaciones de cada cadena.
     :param cadena: La cadena de caracteres cuya representacion en enetros se quiere obtener.
     :return: El numero entero que representa a la cadena proporcionada.
     """
-    if isinstance(cadena, Buffer):
+    if isinstance(cadena, bytes):
         return int.from_bytes(cadena)
     return list(int.from_bytes(n) for n in cadena)
 

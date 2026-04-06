@@ -2,7 +2,6 @@ import numpy as np
 from galois import GF, Poly, lagrange_poly
 
 from typing import Sequence
-from collections.abc import Buffer
 
 from utils import *
 
@@ -70,7 +69,7 @@ class Shamir:
         self.__participaciones_anticipadas = list(zip(participantes_anticipados, aleatoriedad_b64))
         return self.__participaciones_anticipadas
 
-    def crear_participaciones(self, secreto: Buffer) -> list[tuple[str, str]]:
+    def crear_participaciones(self, secreto: bytes) -> list[tuple[str, str]]:
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
@@ -227,7 +226,7 @@ class ShamirSimplificado:
         self.__participaciones_anticipadas = list(zip(participantes_anticipados, aleatoriedad_b64))
         return self.__participaciones_anticipadas
 
-    def crear_participaciones(self, secreto: Buffer) -> list[tuple[str, str]]:
+    def crear_participaciones(self, secreto: bytes) -> list[tuple[str, str]]:
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
