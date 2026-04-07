@@ -2,9 +2,7 @@ from Shamir import Shamir, ShamirSimplificado
 from Rampa import ShamirRampa, McElieceSarwate
 from galois import GF
 
-from typing import Callable
-
-def pedir_entero(pregunta: str, mensaje_error: str, condicion: Callable[[int], bool]) -> int:
+def pedir_entero(pregunta, mensaje_error, condicion):
     """
     Pide por consola un número entero y valida su valor.
     :param pregunta: Mensaje que se muestra por pantalla para pedir el número.

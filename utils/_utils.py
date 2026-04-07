@@ -4,9 +4,8 @@ from base64 import b64decode, b64encode
 from galois import  Poly, GF
 
 from galois.typing import ArrayLike
-from typing import Sequence
 
-def bytes_a_int(cadena: bytes | Sequence[bytes]) -> int | list[int]:
+def bytes_a_int(cadena):
     """
     Obtiene la representacion en entero de un string.
     Si se proporciona una secuencia de strings, devuelve una lista de las representaciones de cada cadena.
@@ -17,7 +16,7 @@ def bytes_a_int(cadena: bytes | Sequence[bytes]) -> int | list[int]:
         return int.from_bytes(cadena)
     return list(int.from_bytes(n) for n in cadena)
 
-def int_a_bytes(numero: int | ArrayLike) -> bytes | list[bytes]:
+def int_a_bytes(numero):
     """
     Obtiene la representacion en bytes de un entero.
     Si se proporciona una secuancia de enteros, devuelve una lista de las representaciones de cada número.
@@ -44,7 +43,7 @@ def int_a_bytes(numero: int | ArrayLike) -> bytes | list[bytes]:
         representacion_str.append(n_int.to_bytes(longitud))
     return representacion_str
 
-def int_a_b64str(lista_int: ArrayLike, longitud: int) -> list[str]:
+def int_a_b64str(lista_int, longitud):
     """
     Obtiene la codificación en base64 de cada número de un array de enteros.
     :param lista_int: El array de enteros.
@@ -56,7 +55,7 @@ def int_a_b64str(lista_int: ArrayLike, longitud: int) -> list[str]:
         return list(b64encode(numero.to_bytes(longitud)).decode() for numero in lista_int.tolist())
     return list(b64encode(numero.to_bytes(longitud)).decode() for numero in lista_int)
 
-def b64str_a_int(lista_b64: list[str]) -> list[int]:
+def b64str_a_int(lista_b64):
     """
     Obtiene la decodificación en base64 de cada string de una lista.
     :param lista_b64: La lista de strings codificados.
@@ -64,7 +63,7 @@ def b64str_a_int(lista_b64: list[str]) -> list[int]:
     """
     return list(int.from_bytes(b64decode(str_b64)) for str_b64 in lista_b64)
 
-def array_aleatorio(sup: int, n:int) -> list[int]:
+def array_aleatorio(sup, n):
     """
     Devuelve un array de longitud n con números aleatorios criptograficamente seguros en el rango [0, sup).
     :param sup: Cota superior (no incluida) para los números aleatorios.
@@ -73,7 +72,7 @@ def array_aleatorio(sup: int, n:int) -> list[int]:
     """
     return [secrets.randbelow(sup) for _ in range(n)]
 
-def polinomio_aleatorio(cuerpo: GF, num_coeffs: int) -> Poly:
+def polinomio_aleatorio(cuerpo, num_coeffs):
     """
     Construye un polinomio aleatorio criptográficamente seguro sobre un cuerpo.
     :param cuerpo: Cuerpo sobre el que se construye el polinomio.

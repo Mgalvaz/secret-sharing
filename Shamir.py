@@ -1,7 +1,5 @@
 import numpy as np
-from galois import GF, Poly, lagrange_poly
-
-from typing import Sequence
+from galois import Poly, lagrange_poly
 
 from utils import *
 
@@ -18,7 +16,7 @@ class Shamir:
             cuerpo = galois.GF(3**5)
             sh = Shamir(cuerpo, 4, ['a', 'b', 'c', 'd', 'e', 'f'])
     """
-    def __init__(self, cuerpo: GF, r: int, participantes: Sequence[str]):
+    def __init__(self, cuerpo, r, participantes):
         r"""
         Crea un esquema de compartición de secretos de Shamir sobre el cuerpo $\mathbb{F}_{p^m}$.
         :param cuerpo: El cuerpo finito sobre sobre el que el esquema está construido.
@@ -48,7 +46,7 @@ class Shamir:
             self._participantes_nombre.append(nombre)
             self._participantes_numero[nombre] = i
 
-    def crear_anticipadas(self, participantes_anticipados: Sequence[str]) -> list[tuple[str, str]]:
+    def crear_anticipadas(self, participantes_anticipados):
         """
         Crea participaciones participantes_anticipados para cada participante especificado.
         El formato de las participaciones es: (Identificador, Participación).
@@ -69,7 +67,7 @@ class Shamir:
         self.__participaciones_anticipadas = list(zip(participantes_anticipados, aleatoriedad_b64))
         return self.__participaciones_anticipadas
 
-    def crear_participaciones(self, secreto: bytes) -> list[tuple[str, str]]:
+    def crear_participaciones(self, secreto):
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
@@ -104,7 +102,7 @@ class Shamir:
         participaciones_b64 = int_a_b64str(polinomio(x), self._longitud_bytes)
         return list(zip((self._participantes_nombre[p] for p in x), participaciones_b64))
 
-    def recuperar_secreto_v1(self, participaciones: Sequence[tuple[str, str]]) -> bytes:
+    def recuperar_secreto_v1(self, participaciones):
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
@@ -127,7 +125,7 @@ class Shamir:
         polinomio = lagrange_poly(puntos, valores)
         return int_a_bytes(polinomio.coefficients(order="asc")[0])
 
-    def recuperar_secreto_v2(self, participaciones: Sequence[tuple[str, str]]) -> bytes:
+    def recuperar_secreto_v2(self, participaciones):
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
@@ -158,7 +156,7 @@ class Shamir:
 
     recuperar_secreto = recuperar_secreto_v2 # Alias para recuperar secreto version 2
 
-    def _verificar_nombres(self, nombres: Sequence[str]) -> None:
+    def _verificar_nombres(self, nombres):
         """
         Verifica que los participantes sean válidos, es decir, que no haya nombres duplicados y todos los nombres estén registrados como participantes.
         :param nombres: La secuencia de nombres que se quiere comprobar
@@ -185,7 +183,7 @@ class ShamirSimplificado:
             cuerpo = galois.GF(5**4)
             sh = ShamirSimplificado(cuerpo, ['a', 'b', 'c', 'd', 'e'])
     """
-    def __init__(self, cuerpo: GF, participantes: Sequence[str]):
+    def __init__(self, cuerpo, participantes):
         r"""
         Crea un esquema de compartición de secretos de Shamir simlificado sobre el cuerpo $\mathbb{F}_{p^m}$.
         :param cuerpo: El cuerpo finito sobre sobre el que el esquema está construido.
@@ -205,7 +203,7 @@ class ShamirSimplificado:
         self.__participaciones_anticipadas = None
         self._longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
 
-    def crear_anticipadas(self, participantes_anticipados: Sequence[str]) -> list[tuple[str, str]]:
+    def crear_anticipadas(self, participantes_anticipados):
         """
         Crea participaciones participantes_anticipados para cada participante especificado.
         El formato de las participaciones es: (Identificador, Participación).
@@ -226,7 +224,7 @@ class ShamirSimplificado:
         self.__participaciones_anticipadas = list(zip(participantes_anticipados, aleatoriedad_b64))
         return self.__participaciones_anticipadas
 
-    def crear_participaciones(self, secreto: bytes) -> list[tuple[str, str]]:
+    def crear_participaciones(self, secreto):
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
@@ -256,7 +254,7 @@ class ShamirSimplificado:
         participaciones_b64 = int_a_b64str(participaciones, self._longitud_bytes)
         return list(zip(x, participaciones_b64))
 
-    def recuperar_secreto(self, participaciones: Sequence[tuple[str, str]]) -> bytes:
+    def recuperar_secreto(self, participaciones):
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
@@ -276,7 +274,7 @@ class ShamirSimplificado:
         # El secreto es la suma de todas las participaciones
         return int_a_bytes(valores.sum())
 
-    def _verificar_nombres(self, nombres: Sequence[str]) -> None:
+    def _verificar_nombres(self, nombres):
         """
         Verifica que los participantes sean válidos, es decir, que no haya nombres duplicados y todos los nombres estén registrados como participantes.
         :param nombres: La secuencia de nombres que se quiere comprobar
