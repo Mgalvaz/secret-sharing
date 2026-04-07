@@ -1,9 +1,7 @@
 import secrets
 import numpy as np
 from base64 import b64decode, b64encode
-from galois import  Poly, GF
-
-from galois.typing import ArrayLike
+from galois import Poly
 
 def bytes_a_int(cadena):
     """
