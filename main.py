@@ -104,7 +104,7 @@ for nombre, part_b64 in participaciones:
     print(f'{nombre}: {part_b64}')
 
 # Reconstrucción del secreto
-print('Escriba el nombre de los participantes que busca reconstruir el secreto y su participacion.')
+print('Escriba el nombre de los participantes que buscan reconstruir el secreto y su participacion.')
 conjunto = []
 nombres = []
 # Pedir las participaciones
