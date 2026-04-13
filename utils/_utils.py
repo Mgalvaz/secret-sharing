@@ -78,3 +78,16 @@ def polinomio_aleatorio(cuerpo, num_coeffs):
     :return: El polinomio aleatorio.
     """
     return Poly([secrets.randbelow(cuerpo.order) for _ in range(num_coeffs)], field=cuerpo)
+
+def extender_matriz(matriz):
+    gf = type(matriz)  # Obtener el cuerpo de trabajo
+    num_bits = gf.degree
+    shape_final = np.array(matriz.shape) * num_bits # Obtener la forma final de la matriz
+    base = gf.primitive_element ** np.arange(num_bits-1, -1, -1) # Base del cuerpo extendido, como vector es Big Endian, se toma la base Big Endian
+    matriz_nueva_base = np.apply_along_axis(np.multiply, 1, matriz, base[:, None]) # Pasar la matriz a la nueva base
+    matriz_gf2 = matriz_nueva_base.vector().reshape(shape_final) # Se toma la representacion de cada elemento de la matriz en el nuevo cuerpo
+    return matriz_gf2.view(np.ndarray).astype(bool) # Se devuelve la matriz extendida en formato booleano
+
+
+
+
