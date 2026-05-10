@@ -238,7 +238,7 @@ class McElieceSarwate:
         if len(secreto) != self._longitud_secreto:
             raise ValueError(f'Se esperaba un secreto de longitud {self._longitud_secreto}, pero se ha recibido uno de longitud {len(secreto)}.')
         secreto_i = self._cuerpo(bytes_a_int(secreto))
-        puntos_secreto = self._cuerpo(np.arange(self._longitud_secreto))
+        puntos_secreto = self._cuerpo.Range(0, self._longitud_secreto)
 
         # Si se han repartido participaciones participantes_anticipados, se realiza compartición avanzada
         if self.__participaciones_anticipadas is not None:
@@ -323,7 +323,7 @@ class McElieceSarwate:
         puntos_matriz = puntos_matriz[mascara].reshape(r - 1, r)  # Al usar la mascara, la matriz se aplana por lo que hay que usar reshape (trabajaremos por columnas)
         denominador = np.prod(puntos_matriz - puntos, axis=0)  # Productorio del denominador
 
-        numerador = np.prod(puntos_matriz - self._cuerpo(np.arange(self._longitud_secreto))[:, None, None], axis=1)  # Productorio del numerador
+        numerador = np.prod(puntos_matriz - self.cuerpo(np.arange(self._longitud_secreto))[:, None, None], axis=1)  # Productorio del numerador
         coef = numerador / denominador  # Cálculo de l_i(a_j)
         return int_a_bytes(np.sum(valores * coef, axis=1))  # Se devuelve la suma y_i * l_i(a_j)"""
         # Calcular el valor del polinomio generador en 0, ..., l-1 sin reconstruirlo
@@ -331,7 +331,7 @@ class McElieceSarwate:
         coef = self._cuerpo.Zeros((self._longitud_secreto, self._reconstruccion))
         for i in range(self._reconstruccion):
             denominador = np.prod(puntos[i] - puntos[mascara[i]])  # Productorio del denominador
-            numerador = np.prod(self._cuerpo(np.arange(self._longitud_secreto))[:, None] - puntos[mascara[i]], axis=1)  # Productorio del numerador
+            numerador = np.prod(self._cuerpo.Range(0, self._longitud_secreto)[:, None] - puntos[mascara[i]], axis=1)  # Productorio del numerador
             coef[:, i] = numerador / denominador  # Cálculo de l_i
         return int_a_bytes(np.sum(valores * coef, axis=1))  # Se devuelve la suma y_i * l_i(a_j)
 

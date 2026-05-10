@@ -40,11 +40,11 @@ class CGL:
 
         # Verificación de condiciones
         if cuerpo.characteristic != 2:
-            raise ValueError(f'El cuerpo introducido no tiene como elemento base 2.')
-
-        #TODO a partir de aqui
+            raise ValueError(f'El cuerpo introducido debe tener como elemento base  el 2.')
         if cuerpo.order <= len(participantes):
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
+        if 2*r-l <= len(participantes):
+            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que 2*r-1 ({2*r-1}).')
         if len(participantes) < 2:
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser mayor que 1.')
         if len(participantes) != len(set(participantes)):
@@ -54,10 +54,19 @@ class CGL:
         if r < 2:
             raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser mayor que 1.')
 
+
+        elementos_participantes = gf.Range(1, m + 1)
+        qc = QuantumCircuit(*participantes)
+
         self._cuerpo = cuerpo
         self._reconstruccion = r
         self.__participaciones_anticipadas = None
-        self._longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
+        participantes_q = [QuantumRegister(dim_participantes, participante) for participante in participantes]
+        QuantumRegister(2,'p').
+        resto_q = [QuantumRegister(dim_participantes, f'p{i}') for i in range(len(participantes)+1, 2*r)]
+        self.__participantes = participantes_q + resto_q
+        self.circuito = QuantumCircuit(*self.__participantes)
+
         self._participantes_nombre = [None] # Array para pasar de numero -> nombre
         self._participantes_numero = {} # Diccionario para pasar nombre -> numero
         for i, nombre in enumerate(participantes, 1):
@@ -93,7 +102,6 @@ class CGL:
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
         """
-        secreto_i = bytes_a_int(secreto)
 
         # Si se han repartido participaciones participantes_anticipados, se realiza compartición avanzada
         if self.__participaciones_anticipadas is not None:

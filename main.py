@@ -1,4 +1,4 @@
-from Shamir import Shamir, ShamirSimplificado
+from Umbral import Shamir, ShamirSimplificado
 from Rampa import ShamirRampa, McElieceSarwate
 from galois import GF
 
@@ -61,7 +61,7 @@ else:
         ss = McElieceSarwate(cuerpo, r, l, participantes)
 
 # Preguntar por participaciones anticipadas
-yn = input('¿Desea repartir participación anticipada? (y/n): ')
+yn = input('¿Desea repartir participaciones anticipadas? (y/n): ')
 if yn.lower() in ('si', 's', 'y', 'yes'):
     n_anticipados = pedir_entero(f'Introduzca el número de participaciones anticipadas (1 - {r-l}): ',
                  f'El número de participaciones anticipadas debe ser al menos 1 y menor que el parámetro de privacidad {r-l}', lambda x: 1 <= x <= r-l)
