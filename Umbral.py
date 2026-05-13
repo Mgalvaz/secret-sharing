@@ -23,12 +23,9 @@ class Shamir:
         :param r: Parámetro de reconstrucción del esquema (número mínimo de participantes necesarios para reconstruir el secreto).
         :param participantes: Lista de los nombres únicos de cada participante del esquema.
         """
-
         # Verificación de condiciones
         if cuerpo.order <= len(participantes):
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
-        if len(participantes) < 2:
-            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser mayor que 1.')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
         if len(participantes) < r:
@@ -36,73 +33,77 @@ class Shamir:
         if r < 2:
             raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser mayor que 1.')
 
-        self._cuerpo = cuerpo
-        self._reconstruccion = r
-        self.__participaciones_anticipadas = None
-        self._longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
-        self._participantes_nombre = [None] # Array para pasar de numero -> nombre
-        self._participantes_numero = {} # Diccionario para pasar nombre -> numero
-        for i, nombre in enumerate(participantes, 1):
-            self._participantes_nombre.append(nombre)
-            self._participantes_numero[nombre] = i
+        self.cuerpo = cuerpo
+        self.reconstruccion = r
+        self.__participaciones_anticipadas = []
+        self.longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
+        self.participantes_nombre = np.array([None] + participantes)
+        self.participantes_numero = {nombre: i for i, nombre in enumerate(participantes, 1)}
 
-    def crear_anticipadas(self, participantes_anticipados):
+    def comparticion_anticipada(self, participantes_anticipados):
         """
-        Crea participaciones participantes_anticipados para cada participante especificado.
+        Crea participaciones anticipadas para cada participante especificado.
         El formato de las participaciones es: (nombre, participación).
-        :param participantes_anticipados: Listado de los participantes a entregar participaciones participantes_anticipados.
-        :return: Una lista que contienene las participaciones participantes_anticipados asignadas a cada participante especificado.
+        :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
+        :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
 
         # Verificación de condiciones
-        if len(participantes_anticipados) < 1:
-            raise ValueError(f'El numero de participaciones participantes_anticipados ({len(participantes_anticipados)}) debe ser al menos 1.')
-        if self._reconstruccion - 1 < len(participantes_anticipados):
-            raise ValueError(f'El numero de participaciones participantes_anticipados ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self._reconstruccion - 1})')
+        if self.__participaciones_anticipadas is None:
+            raise AttributeError(f'Ya se han repartido todas las participaciones.')
+        if len(self.__participaciones_anticipadas) > 0:
+            conjunto_nombres_anticipados = set(list(zip(*self.__participaciones_anticipadas))[0])
+            for nombre in participantes_anticipados:
+                if nombre in conjunto_nombres_anticipados:
+                    raise ValueError(f'El participante {nombre} ya ha recibido una participación anticipada.')
         self._verificar_nombres(participantes_anticipados)
+        if self.reconstruccion - len(self.__participaciones_anticipadas) <= len(participantes_anticipados):
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1})')
 
-        # Generar las participaciones participantes_anticipados, que son elementos aleatorios del cuerpo
-        aleatoriedad = array_aleatorio(self._cuerpo.order, len(participantes_anticipados))
-        aleatoriedad_b64 = int_a_b64str(aleatoriedad, self._longitud_bytes)
-        self.__participaciones_anticipadas = list(zip(participantes_anticipados, aleatoriedad_b64))
-        return self.__participaciones_anticipadas
+        # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
+        aleatoriedad = array_aleatorio(self.cuerpo.order, len(participantes_anticipados))
+        aleatoriedad_b64 = int_a_b64str(aleatoriedad, self.longitud_bytes)
+        extras = list(zip(participantes_anticipados, aleatoriedad_b64))
+        self.__participaciones_anticipadas.extend(extras)
+        return extras
 
-    def crear_participaciones(self, secreto):
+    def codificacion(self, secreto):
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (nombre, participación).
-        Si se han distribuido participaciones participantes_anticipados, las participaciones serán coherentes con las mismas.
+        Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
         """
+        if self.__participaciones_anticipadas is None:
+            raise AttributeError(f'Ya se han repartido todas las participaciones.')
         secreto_i = bytes_a_int(secreto)
 
-        # Si se han repartido participaciones participantes_anticipados, se realiza compartición avanzada
-        if self.__participaciones_anticipadas is not None:
+        # Procedimiento estandar
+        if len(self.__participaciones_anticipadas) == 0:
+            polinomio = Poly(array_aleatorio(self.cuerpo.order, self.reconstruccion - 1) + [secreto_i], field=self.cuerpo)
+            x = np.arange(1, len(self.participantes_nombre))
+        # Compartición anticipada
+        else:
             # Obtener el elemento asociado a cada participante y decodificar su participación
             nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
-            puntos_anticipados = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres) + [0])
-            valores_anticipados = self._cuerpo(b64str_a_int(valores_b64) + [secreto_i])
-            x = np.setdiff1d(list(self._participantes_numero.values()), puntos_anticipados)
+            puntos_anticipados = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres) + [0])
+            valores_anticipados = self.cuerpo(b64str_a_int(valores_b64) + [secreto_i])
+            x = np.setdiff1d(np.arange(1, len(self.participantes_nombre)), puntos_anticipados)
 
-            # Se determina un polinomio de grado r-1 compatible con las participaciones participantes_anticipados
+            # Se determina un polinomio de grado r-1 compatible con las participaciones anticipadas
             lagrange = lagrange_poly(puntos_anticipados, valores_anticipados)
-            if len(puntos_anticipados) < self._reconstruccion - 1: # Si el número de participaciones participantes_anticipados es menor que r-1, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self._cuerpo) * polinomio_aleatorio(self._cuerpo, self._reconstruccion - len(puntos_anticipados) - 1)
+            if len(puntos_anticipados) < self.reconstruccion - 1: # Si el número de participaciones anticipadas es menor que r-1, hay que completar el polinomio con aleatoriedad
+                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * polinomio_aleatorio(self.cuerpo, self.reconstruccion - len(puntos_anticipados) - 1)
             else: # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
-            del self.__participaciones_anticipadas # Eliminación de las participaciones participantes_anticipados para mayor seguridad
-
-        # Si no, se sigue el proceso estándar
-        else:
-            polinomio = Poly(array_aleatorio(self._cuerpo.order, self._reconstruccion - 1) + [secreto_i], field=self._cuerpo)
-            x = list(self._participantes_numero.values())
 
         # Generar el resto de las participaciones
-        participaciones_b64 = int_a_b64str(polinomio(x), self._longitud_bytes)
-        return list(zip((self._participantes_nombre[p] for p in x), participaciones_b64))
+        participaciones_b64 = int_a_b64str(polinomio(x), self.longitud_bytes)
+        self.__participaciones_anticipadas = None  # Se eliminan las participaciones anticipadas almacenadas para mayor seguridad
+        return list(zip(self.participantes_nombre[x], participaciones_b64))
 
-    def recuperar_secreto_v1(self, participaciones):
+    def _decodificacion_alternativa(self, participaciones):
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (nombre, participación).
@@ -112,20 +113,20 @@ class Shamir:
         """
 
         # Verificación de condiciones
-        if len(participaciones) < self._reconstruccion:
+        if len(participaciones) < self.reconstruccion:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
-        nombres, valores_b64 = zip(*participaciones[:self._reconstruccion])
+        nombres, valores_b64 = zip(*participaciones[:self.reconstruccion])
         self._verificar_nombres(nombres)
 
         # Obtener el elemento asociado a cada participante y decodificar su participación
-        puntos = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres))
-        valores = self._cuerpo(b64str_a_int(valores_b64))
+        puntos = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres))
+        valores = self.cuerpo(b64str_a_int(valores_b64))
 
         # Reconstruir el polinomio generador y el secreto como su coeficiente independiente
         polinomio = lagrange_poly(puntos, valores)
         return int_a_bytes(polinomio.coefficients(order="asc")[0])
 
-    def recuperar_secreto_v2(self, participaciones):
+    def decodificacion(self, participaciones):
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (nombre, participación).
@@ -135,26 +136,23 @@ class Shamir:
         """
 
         # Verificación de condiciones
-        r = self._reconstruccion
+        r = self.reconstruccion
         if len(participaciones) < r:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
         nombres, valores_b64 = zip(*participaciones[:r])
         self._verificar_nombres(nombres)
 
         # Obtener el elemento asociado a cada participante y decodificar su participación
-        puntos = self._cuerpo(list(self._participantes_numero[nombre] for nombre in nombres))
-        valores = self._cuerpo(b64str_a_int(valores_b64))
-
+        puntos = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres))
+        valores = self.cuerpo(b64str_a_int(valores_b64))
         # Calcular el valor del polinomio generador en 0 sin reconstruirlo
         mascara = ~np.eye(r, dtype=bool) # Máscara de los elementos x_h de la fórmula
-        puntos_matriz = np.broadcast_to(puntos, (r, r)) # Se crea una matriz que cada fila es el array puntos
-        puntos_matriz = puntos_matriz[mascara].reshape(r - 1, r) # Al usar la mascara, la matriz se aplana por lo que hay que usar reshape (trabajaremos por columnas)
+        puntos_matriz = np.broadcast_to(puntos, (r, r)) # Matriz en la que cada fila es el array puntos
+        puntos_matriz = puntos_matriz[mascara].reshape((r, r-1)).T # Al usar la mascara, la matriz se aplana, por lo que se usa reshape
+        numerador = np.prod(puntos_matriz, axis=0)  # Productorio del numerador
         denominador = np.prod(puntos_matriz - puntos, axis=0) # Productorio del denominador
-        numerador = np.prod(puntos_matriz, axis=0) # Productorio del numerador
         coef = numerador / denominador # Cálculo de l_j
         return int_a_bytes(np.sum(valores * coef)) # Se devuelve la suma y_j * l_j
-
-    recuperar_secreto = recuperar_secreto_v2 # Alias para recuperar secreto version 2
 
     def _verificar_nombres(self, nombres):
         """
@@ -165,7 +163,7 @@ class Shamir:
         if len(nombres) != len(set(nombres)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
         # Comprobar que los participantes existen
-        conjunto_nombres = self._participantes_numero
+        conjunto_nombres = self.participantes_numero
         for nombre in nombres:
             if nombre not in conjunto_nombres:
                 raise ValueError(f'El participante {nombre} no está registrado.')
@@ -191,8 +189,6 @@ class Simplificado:
         """
 
         # Verificación de condiciones
-        if cuerpo.order <= len(participantes):
-            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
         if len(participantes) < 2:
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser mayor que 1.')
         if len(participantes) != len(set(participantes)):
@@ -205,10 +201,10 @@ class Simplificado:
 
     def comparticion_anticipada(self, participantes_anticipados):
         """
-        Crea participaciones participantes_anticipados para cada participante especificado.
+        Crea participaciones anticipadas para cada participante especificado.
         El formato de las participaciones es: (nombre, participación).
-        :param participantes_anticipados: Listado de los participantes a entregar participaciones participantes_anticipados.
-        :return: Una lista que contienene las participaciones participantes_anticipados asignadas a cada participante especificado.
+        :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
+        :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
         # Verificación de condiciones
         if self.__participaciones_anticipadas is None:
@@ -233,7 +229,7 @@ class Simplificado:
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (nombre, participación).
-        Si se han distribuido participaciones participantes_anticipados, las participaciones serán coherentes con las mismas.
+        Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
         """
@@ -245,7 +241,6 @@ class Simplificado:
         if len(self.__participaciones_anticipadas) == 0:
             x = self.participantes
             suma = self.cuerpo(0)
-            self.__participaciones_anticipadas = None  # Indicar que se han repartido las participaciones
 
         # Compartición anticipada
         else:
@@ -254,12 +249,12 @@ class Simplificado:
             valores = self.cuerpo(b64str_a_int(valores_b64))
             x = np.setdiff1d(self.participantes, nombres).tolist()
             suma = valores.sum()
-            self.__participaciones_anticipadas = None  # Se eliminan las participaciones anticipadas almacenadas para mayor seguridad
 
         # Se generan el resto de participaciones
         participaciones = self.cuerpo(array_aleatorio(self.cuerpo.order, len(x) - 1))
         participaciones = np.append(participaciones, self.cuerpo(secreto_i) - participaciones.sum() - suma) # La última debe ser igual al secreto menos la suma de todas las anteriores
         participaciones_b64 = int_a_b64str(participaciones, self.longitud_bytes)
+        self.__participaciones_anticipadas = None  # Se eliminan las participaciones anticipadas almacenadas para mayor seguridad
         return list(zip(x, participaciones_b64))
 
     def decodificacion(self, participaciones):

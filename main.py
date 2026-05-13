@@ -80,7 +80,7 @@ if yn.lower() in ('si', 's', 'y', 'yes'):
             part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i + 1}: ')
         participantes_anticipados.append(part_anticipado)
     # Crear particpaciones anticipadas
-    participaciones_anticipadas = ss.crear_anticipadas(participantes_anticipados)
+    participaciones_anticipadas = ss.comparticion_anticipada(participantes_anticipados)
     for nombre, ant_b64 in participaciones_anticipadas:
         print(f'{nombre}: {ant_b64}')
 
@@ -99,7 +99,7 @@ else:
         secreto.append(sec)
 
 # Crear participaciones
-participaciones = ss.crear_participaciones(secreto)
+participaciones = ss.codificacion(secreto)
 for nombre, part_b64 in participaciones:
     print(f'{nombre}: {part_b64}')
 

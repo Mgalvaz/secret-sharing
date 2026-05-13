@@ -329,9 +329,10 @@ class McElieceSarwate:
         # Calcular el valor del polinomio generador en 0, ..., l-1 sin reconstruirlo
         mascara = ~np.eye(self._reconstruccion, dtype=bool)  # Máscara de los elementos x_h de la fórmula
         coef = self._cuerpo.Zeros((self._longitud_secreto, self._reconstruccion))
+        alphas = self._cuerpo.Range(0, self._longitud_secreto)[:, None]
         for i in range(self._reconstruccion):
-            denominador = np.prod(puntos[i] - puntos[mascara[i]])  # Productorio del denominador
-            numerador = np.prod(self._cuerpo.Range(0, self._longitud_secreto)[:, None] - puntos[mascara[i]], axis=1)  # Productorio del numerador
+            numerador = np.prod(alphas - puntos[mascara[i]], axis=1)  # Productorio del numerador aj - xh
+            denominador = np.prod(puntos[i] - puntos[mascara[i]])  # Productorio del denominador xi - xh
             coef[:, i] = numerador / denominador  # Cálculo de l_i
         return int_a_bytes(np.sum(valores * coef, axis=1))  # Se devuelve la suma y_i * l_i(a_j)
 
