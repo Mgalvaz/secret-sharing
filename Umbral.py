@@ -47,7 +47,6 @@ class Shamir:
         :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
-
         # Verificación de condiciones
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
@@ -111,7 +110,6 @@ class Shamir:
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto.
         """
-
         # Verificación de condiciones
         if len(participaciones) < self.reconstruccion:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
@@ -134,7 +132,6 @@ class Shamir:
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto.
         """
-
         # Verificación de condiciones
         r = self.reconstruccion
         if len(participaciones) < r:
@@ -187,7 +184,6 @@ class Simplificado:
         :param cuerpo: El cuerpo finito sobre sobre el que el esquema está construido.
         :param participantes: Lista de los nombres únicos de cada participante del esquema.
         """
-
         # Verificación de condiciones
         if len(participantes) < 2:
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser mayor que 1.')

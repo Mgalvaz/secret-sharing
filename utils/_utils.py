@@ -88,6 +88,10 @@ def extender_matriz(matriz):
     matriz_gf2 = matriz_nueva_base.vector().reshape(shape_final) # Se toma la representacion de cada elemento de la matriz en el nuevo cuerpo
     return matriz_gf2.view(np.ndarray).astype(bool) # Se devuelve la matriz extendida en formato booleano
 
-
-
-
+def solucion_particular(A, b):
+    gf = type(A)  # Obtener el cuerpo de trabajo
+    junto = gf(np.column_stack((A,b)))
+    no_fijo = junto.row_reduce()[:,-1]
+    ceros = gf.Zeros(A.shape[1])
+    ceros[:len(b)] = no_fijo
+    return ceros
