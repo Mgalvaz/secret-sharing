@@ -124,7 +124,7 @@ for _ in range(r):
     nombres.append(nombre)
 
 # Reconstruir el secreto
-secreto = ss.recuperar_secreto(conjunto)
+secreto = ss.decodificacion(conjunto)
 
 try:
     if l == 1:

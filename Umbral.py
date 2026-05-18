@@ -119,7 +119,6 @@ class Shamir:
         # Obtener el elemento asociado a cada participante y decodificar su participación
         puntos = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres))
         valores = self.cuerpo(b64str_a_int(valores_b64))
-
         # Reconstruir el polinomio generador y el secreto como su coeficiente independiente
         polinomio = lagrange_poly(puntos, valores)
         return int_a_bytes(polinomio.coefficients(order="asc")[0])
