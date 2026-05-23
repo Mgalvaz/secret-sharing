@@ -102,9 +102,8 @@ class ShamirRampa:
             # Se determina un polinomio de grado r-1 compatible con las participaciones anticipadas
             polinomio_secreto = Poly(secreto_i, field=self.cuerpo, order='asc') # f_s
             lagrange = lagrange_poly(puntos_anticipados, (valores_anticipados - polinomio_secreto(puntos_anticipados)) / puntos_anticipados ** self.longitud_secreto)
-            if len(puntos_anticipados) < self.reconstruccion - self.longitud_secreto - 1:  # Si el número de participaciones anticipadas es menor que r-l-1, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * polinomio_aleatorio(
-                    self.cuerpo, self.reconstruccion - self.longitud_secreto - len(puntos_anticipados) - 1)
+            if len(puntos_anticipados) < self.reconstruccion - self.longitud_secreto:  # Si el número de participaciones anticipadas es menor que r-l, hay que completar el polinomio con aleatoriedad
+                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * polinomio_aleatorio(self.cuerpo, self.reconstruccion - self.longitud_secreto - len(puntos_anticipados) - 1)
             else:  # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
             # Generar el resto de las participaciones
@@ -235,9 +234,7 @@ class McElieceSarwate:
             x = np.arange(self.longitud_secreto, len(self.participantes_nombre))
             # Hay que construir un polinomio que interpole al secreto en sus respectivos puntos y que sea de grado r - 1
             lagrange = lagrange_poly(alpha, secreto_i)
-            polinomio = lagrange + Poly.Roots(alpha, field=self.cuerpo) * polinomio_aleatorio(self.cuerpo,
-                                                                                              self.reconstruccion - len(
-                                                                                                  alpha))
+            polinomio = lagrange + Poly.Roots(alpha, field=self.cuerpo) * polinomio_aleatorio(self.cuerpo,self.reconstruccion - self.longitud_secreto - 1)
         # Compartición anticipada
         else:
             # Obtener el elemento asociado a cada participante y decodificar su participación
@@ -250,8 +247,7 @@ class McElieceSarwate:
             valores_lagrange = self.cuerpo(np.concatenate([secreto_i, valores_anticipados]))
             lagrange = lagrange_poly(puntos_lagrange, valores_lagrange)
             if len(puntos_anticipados) < self.reconstruccion - self.longitud_secreto:  # Si el número de participaciones anticipadas es menor que r-l, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(np.concatenate([alpha, puntos_anticipados]), field=self.cuerpo) * polinomio_aleatorio(
-                    self.cuerpo, self.reconstruccion - self.longitud_secreto - len(puntos_anticipados))
+                polinomio = lagrange + Poly.Roots(np.concatenate([alpha, puntos_anticipados]), field=self.cuerpo) * polinomio_aleatorio(self.cuerpo, self.reconstruccion - self.longitud_secreto - len(puntos_anticipados) - 1)
             else:  # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
 
