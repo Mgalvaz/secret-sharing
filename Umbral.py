@@ -147,8 +147,8 @@ class Shamir:
         puntos_matriz = puntos_matriz[mascara].reshape((r, r-1)).T # Al usar la mascara, la matriz se aplana, por lo que se usa reshape
         numerador = np.prod(puntos_matriz, axis=0)  # Productorio del numerador
         denominador = np.prod(puntos_matriz - puntos, axis=0) # Productorio del denominador
-        coef = numerador / denominador # Cálculo de l_j
-        return int_a_bytes(np.sum(valores * coef)) # Se devuelve la suma y_j * l_j
+        coef = numerador / denominador # Cálculo de l_i
+        return int_a_bytes(np.sum(valores * coef)) # Se devuelve la suma y_i * l_i
 
     def _verificar_nombres(self, nombres):
         """
