@@ -93,7 +93,7 @@ class Shamir:
             # Se determina un polinomio de grado r-1 compatible con las participaciones anticipadas
             lagrange = lagrange_poly(puntos_anticipados, valores_anticipados)
             if len(puntos_anticipados) < self.reconstruccion - 1: # Si el número de participaciones anticipadas es menor que r-1, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * polinomio_aleatorio(self.cuerpo, self.reconstruccion - len(puntos_anticipados) - 1)
+                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * polinomio_aleatorio(self.cuerpo, self.reconstruccion - len(puntos_anticipados) - 2)
             else: # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
 
