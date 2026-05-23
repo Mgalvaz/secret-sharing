@@ -70,14 +70,14 @@ def array_aleatorio(sup, n):
     """
     return [secrets.randbelow(sup) for _ in range(n)]
 
-def polinomio_aleatorio(cuerpo, num_coeffs):
+def polinomio_aleatorio(cuerpo, grado):
     """
     Construye un polinomio aleatorio criptográficamente seguro sobre un cuerpo.
     :param cuerpo: Cuerpo sobre el que se construye el polinomio.
-    :param num_coeffs: El número de coeficientes del polinomio. Equivalentemente, el grado del polinomio más 1.
+    :param grado: El grado del polinomio. Equivalentemente, El número de coeficientes del polinomio menos 1.
     :return: El polinomio aleatorio.
     """
-    return Poly([secrets.randbelow(cuerpo.order) for _ in range(num_coeffs)], field=cuerpo)
+    return Poly([secrets.randbelow(cuerpo.order) for _ in range(grado+1)], field=cuerpo)
 
 def extender_matriz(matriz):
     gf = type(matriz)  # Obtener el cuerpo de trabajo
