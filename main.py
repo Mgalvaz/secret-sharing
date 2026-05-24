@@ -1,4 +1,4 @@
-from Umbral import Shamir, ShamirSimplificado
+from Umbral import Shamir, Simplificado
 from Rampa import ShamirRampa, McElieceSarwate
 from galois import GF
 
@@ -46,7 +46,7 @@ if l == 1:
     if r == n:
         yn = input('Se ha detectado que el número de participantes necesarios para reconstruir el esquema coincide con el número de participantes, ¿desea utilizar el esquema simplificado? (y/n): ')
         if yn.lower() in ('si', 's', 'y', 'yes'):
-            ss = ShamirSimplificado(cuerpo, participantes)
+            ss = Simplificado(cuerpo, participantes)
         else:
             ss = Shamir(cuerpo, r, participantes)
     else:
