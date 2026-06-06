@@ -2,19 +2,12 @@ import numpy as np
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.quantum_info import partial_trace
 from qiskit.circuit.library import LinearFunction
-from qiskit_aer import AerSimulator
+from qiskit_aer import StatevectorSimulator
 
 from utils import extender_matriz
 
-sim = AerSimulator(method='statevector')
-# Funciones utilidad
-def run_statevector(quantum_circuit):
-    circ_copy = quantum_circuit.copy()
-    circ_copy.save_statevector()
-    job = sim.run(circ_copy)
-    return job.result().get_statevector(circ_copy)
 
-
+sim = StatevectorSimulator()
 class CGL:
     r"""
     Esquema cuántico de compartición de secretos de Cleve-Gottesman-Lo sobre el espacio de Hilbert complejo $\mathcal{H}_{2^m}$.
@@ -165,6 +158,6 @@ class CGL:
         matriz_p2 = elementos_resto[:,None]**np.arange(r) # Matriz del segundo paso del procediemiento de decodificacion
         matriz = extender_matriz(matriz_p2@matriz_p1)
         qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
-        sv = run_statevector(qc.decompose('Linear_function')) # Silmualar el circuito
+        sv = sim.run(qc.decompose('Linear_function')).result().get_statevector()
         elementos_traza = list(range((int(elementos[0])-1)*self.cuerpo.degree)) + list(range(int(elementos[0])*self.cuerpo.degree, (2*self.reconstruccion-1)*self.cuerpo.degree))  # Posicion de los qubits a trazar
         return partial_trace(sv, elementos_traza).to_statevector()
