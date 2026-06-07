@@ -72,7 +72,7 @@ class Shamir:
         El formato de las participaciones es: (nombre, participación).
         Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
-        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
+        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
@@ -226,7 +226,7 @@ class Simplificado:
         El formato de las participaciones es: (nombre, participación).
         Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
-        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
+        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')

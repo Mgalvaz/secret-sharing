@@ -77,7 +77,7 @@ class ShamirRampa:
         El formato de las participaciones es: (Identificador, Participación).
         Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
-        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
+        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
         # Verificación de condiciones
         if self.__participaciones_anticipadas is None:
@@ -219,7 +219,7 @@ class McElieceSarwate:
         El formato de las participaciones es: (Identificador, Participación).
         Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
-        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución avanzada.
+        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
         # Verificación de condiciones
         if self.__participaciones_anticipadas is None:
