@@ -44,7 +44,8 @@ class CGL:
         self.cuerpo = cuerpo
         self.reconstruccion = r
         self.__participaciones_anticipadas = []
-        self.__posicion_secreto_anticipado = None
+        self.elem_anticipadas_no_repartidas = []
+        self.__participacion_secreto_anticipado = None
         participaciones_reales = [QuantumRegister(cuerpo.degree, participante) for participante in participantes]
         participaciones_ficticias = [QuantumRegister(cuerpo.degree, f'p{i}') for i in range(len(participantes) + 1, 2 * r)]
         self.__participaciones = participaciones_reales + participaciones_ficticias
@@ -61,44 +62,32 @@ class CGL:
         # Verificación de condiciones
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
+        if self.__participacion_secreto_anticipado is not None:
+            raise AttributeError(f'Ya se han repartido las participaciones anticipadas.')
         if len(participantes_anticipados) != len(set(participantes_anticipados)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
         for nombre in participantes_anticipados:
             if nombre not in self.participantes_numero:
                 raise ValueError(f'El participante {nombre} no está registrado.')
-        if len(self.__participaciones_anticipadas) > 0:
-            conjunto_nombres_anticipados = set(participacion.name for participacion in self.__participaciones_anticipadas)
-            for nombre in participantes_anticipados:
-                if nombre in conjunto_nombres_anticipados:
-                    raise ValueError(f'El participante {nombre} ya ha recibido una participación anticipada.')
-        if self.reconstruccion <= len(participantes_anticipados) + len(self.__participaciones_anticipadas):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1})')
+        if self.reconstruccion <= len(participantes_anticipados):
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1})')
+
         qc = self.__circuito
         r = self.reconstruccion
-        # Si ya se ha creado el estado completamente mezclado
-        if len(self.__participaciones_anticipadas) > 0:
-            part_anticipadas = [self.__participaciones[self.participantes_numero[nombre] - 1] for nombre in participantes_anticipados]
-            self.__participaciones_anticipadas.extend(part_anticipadas)
-            if self.__posicion_secreto_anticipado.name in participantes_anticipados: # Si la participacion anticipada es la que se ha guardado para almacenar el secreto, se debe cambiar
-                posicion_secreto = next((part for part in self.__participaciones if part not in set(self.__participaciones_anticipadas)), None) # Obtener una participacion no anticipada
-                if posicion_secreto:
-                    qc.swap(posicion_secreto, self.__posicion_secreto_anticipado)
-                    self.__posicion_secreto_anticipado = posicion_secreto
-            return part_anticipadas
-        # Si es la primera vez que se llama
-        else:
-            elem_anticipadas = [self.participantes_numero[nombre] for nombre in participantes_anticipados]
-            part_anticipadas = [self.__participaciones[idx - 1] for idx in elem_anticipadas]
-            elem_resto = np.setdiff1d(range(1, 2 * r), elem_anticipadas).tolist() # Elementos de todos los participantes no anticipados
-            resto = [self.__participaciones[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
-            psi1 = part_anticipadas + resto[:r - len(part_anticipadas) - 1] # Se amplian las participaciones anticipadas hasta ser r-1
-            psi2 = resto[r - len(part_anticipadas) - 1:-1] # Participaciones que no son anticipadas
-            self.__posicion_secreto_anticipado = resto[-1] # Participación en la que se inicializará el secreto
-            # Crear el estado completamente mezcado (sum |y>|y>)
-            for qudit_1, qudit_2 in zip(psi1, psi2):
-                qc.h(qudit_1)
-                qc.cx(qudit_1, qudit_2)
-            self.__participaciones_anticipadas.extend(part_anticipadas)
+        elem_anticipadas = [self.participantes_numero[nombre] for nombre in participantes_anticipados]
+        part_anticipadas = [self.__participaciones[idx - 1] for idx in elem_anticipadas]
+        elem_resto = np.setdiff1d(range(1, 2 * r), elem_anticipadas).tolist() # Elementos de todos los participantes no anticipados
+        resto = [self.__participaciones[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
+        no_entregadas = resto[:r - len(part_anticipadas) - 1]
+        psi1 = part_anticipadas + no_entregadas # Se amplian las participaciones anticipadas hasta ser r-1
+        psi2 = resto[r - len(part_anticipadas) - 1:-1] # Participaciones que no son anticipadas
+        self.__participacion_secreto_anticipado = resto[-1] # Participación en la que se inicializará el secreto
+        # Crear el estado máximamente entrelazado (sum |y>|y>)
+        for qudit_1, qudit_2 in zip(psi1, psi2):
+            qc.h(qudit_1)
+            qc.cx(qudit_1, qudit_2)
+        self.__participaciones_anticipadas = psi1
+        self.elem_anticipadas_no_repartidas = elem_resto[:r - len(part_anticipadas) - 1]
         return part_anticipadas
 
     def codificacion(self, secreto):
@@ -122,7 +111,7 @@ class CGL:
         m = 2*r-1 # Numero de participantes totales
         # Procedimiento estandar
         if len(self.__participaciones_anticipadas) == 0:
-            x = list(range(1, m+1))
+            x = np.arange(1, m+1)
             qc.initialize(secreto, [self.__participaciones[0]])  # Inicializar el secreto
             for participacion in self.__participaciones[1:r]:  # Superponer todos los posibles valores de los coeficientes del polinomio
                 qc.h(participacion)
@@ -131,27 +120,23 @@ class CGL:
             matriz = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(m-r), np.zeros((r, m-r))])])) # Matriz de evaluación
             matriz = extender_matriz(matriz) # Extender la matriz de numeros de F_q a vectores de F_2
             orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]  # Como qiskit es Little Endian, pero la matriz extendida está en Big Endian, hay que invertir el orden de los qubits de los participantes
-            x = x[:len(self.participantes_numero)]
         # Compartición anticipada
         else:
-            qc.initialize(secreto, self.__posicion_secreto_anticipado)
+            qc.initialize(secreto, self.__participacion_secreto_anticipado)
             elem_anticipados = [self.participantes_numero[participacion.name] for participacion in self.__participaciones_anticipadas]
-            x = np.setdiff1d(range(1, len(self.participantes_numero)+1), elem_anticipados) # Elementos de los participantes reales no anticipados
-            num_adicionales = r - len(elem_anticipados) - 1 # Si se han repartido menos de r-1 participaciones anticipadas, hay que rellenar
-            if num_adicionales > 0:
-                elem_anticipados.extend(x[:num_adicionales].tolist())
+            elem_resto = np.setdiff1d(range(1, 2*r), elem_anticipados) # Elementos de todos los participantes no anticipados
+            x = np.concat([elem_resto, self.elem_anticipadas_no_repartidas])
             elem_anticipados = self.cuerpo(elem_anticipados + [0])
-            elem_resto = self.cuerpo(np.concatenate([x[num_adicionales:], np.arange(len(self.participantes_numero)+1, 2*r)])) # Elementos de  todos los participantes no anticipados
             part_resto = [self.__participaciones[idx - 1] for idx in elem_resto.tolist()] # Participaciones de todos los participantes no anticipados
             matriz_p1 = np.linalg.inv(elem_anticipados[:, None] ** np.arange(r))  # Matriz del primer paso del procedimiento de decodificacion
-            matriz_p2 = elem_resto[:, None] ** np.arange(r)  # Matriz del segundo paso del procediemiento de decodificacion
+            matriz_p2 = self.cuerpo(elem_resto)[:, None] ** np.arange(r)  # Matriz del segundo paso del procedimiento de decodificacion
             matriz = extender_matriz(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
         self.__circuito = qc.decompose('Linear_function')
         self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
-        # Generar el resto de las participaciones
-        return list(self.__participaciones[i-1] for i in x)
+        # Generar el resto de las participaciones reales
+        return list(self.__participaciones[i-1] for i in x[x <= len(self.participantes_numero)])
 
     def decodificacion(self, participaciones):
         """
