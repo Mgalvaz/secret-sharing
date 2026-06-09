@@ -13,7 +13,7 @@ class CGL:
     Esquema cuántico de compartición de secretos de Cleve-Gottesman-Lo sobre el espacio de Hilbert complejo $\mathcal{H}_{2^m}$.
 
     Ejemplo:
-        Crea un esquema de Cleve-Gottesman-Lo con parámetro r = 4 sobre $\mathcal{H}_{2^5}$ para los participantes ['a', 'b', 'c', 'd', 'e', 'f'] con .
+        Crea un esquema de Cleve-Gottesman-Lo con parámetro r = 4 sobre $\mathcal{H}_{2^5}$ para los participantes ['a', 'b', 'c', 'd', 'e', 'f'].
 
         .. ipython:: python
 
@@ -127,8 +127,8 @@ class CGL:
             x = np.concat([elem_resto, self.elem_anticipadas_no_repartidas])
             elem_anticipados = self.cuerpo(elem_anticipados + [0])
             part_resto = [self.__participaciones[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
-            matriz_p1 = np.linalg.inv(elem_anticipados[:, None] ** np.arange(r))  # Matriz del primer paso del procedimiento de decodificacion
-            matriz_p2 = self.cuerpo(elem_resto)[:, None] ** np.arange(r)  # Matriz del segundo paso del procedimiento de decodificacion
+            matriz_p1 = np.linalg.inv(elem_anticipados[:, None] ** np.arange(r))
+            matriz_p2 = self.cuerpo(elem_resto)[:, None] ** np.arange(r)
             matriz = extender_matriz(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
