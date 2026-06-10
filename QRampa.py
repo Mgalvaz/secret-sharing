@@ -167,7 +167,7 @@ class Ogawa:
         r = self.reconstruccion
         l = self.longitud_secreto
         qc = self.__circuito
-        # Obetener los elementos asociados a cada participante, es necesario ordenar para que al hacer la traza parcial se mantenga el orden del secreto
+        # Obetener los elementos asociados a cada participante. Es necesario ordenar para que al hacer la traza parcial se mantenga el orden del secreto
         participaciones_ordenadas = sorted(participaciones[:r], key=lambda p: self.participantes_numero[p.name])
         elementos_ordenados = [self.participantes_numero[participacion.name] for participacion in participaciones_ordenadas]
         elementos_resto = np.setdiff1d(np.arange(1,2*r-l+1), elementos_ordenados)
@@ -343,7 +343,7 @@ class ZhangMatsumoto:
         r = self.reconstruccion
         l = self.longitud_secreto
         qc = self.__circuito
-        # Obetener los elementos asociados a cada participante, es necesario ordenar para que al hacer la traza parcial se mantenga el orden del secreto
+        # Obetener los elementos asociados a cada participante. Es necesario ordenar para que al hacer la traza parcial se mantenga el orden del secreto
         participaciones_ordenadas = sorted(participaciones[:r], key=lambda p: self.participantes_numero[p.name])
         elementos_ordenados = [self.participantes_numero[participacion.name] for participacion in participaciones_ordenadas]
         elementos_resto = self.cuerpo(np.setdiff1d(np.arange(2*r), elementos_ordenados))
