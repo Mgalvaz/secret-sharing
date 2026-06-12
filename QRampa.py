@@ -163,7 +163,7 @@ class Ogawa:
         conjunto_participaciones = set(self.__participaciones)
         for participacion in participaciones:
             if participacion not in conjunto_participaciones:
-                raise ValueError(f"El participante {participacion.name} no está registrado o ha entregado un qudit incorrecto..")
+                raise ValueError(f"El participante {participacion.name} no está registrado o ha entregado un qudit incorrecto.")
 
         r = self.reconstruccion
         l = self.longitud_secreto
@@ -339,12 +339,12 @@ class ZhangMatsumoto:
         conjunto_participaciones = set(self.__participaciones)
         for participacion in participaciones:
             if participacion not in conjunto_participaciones:
-                raise ValueError(f"El participante {participacion.name} no está registrado o ha entregado un qudit incorrecto..")
+                raise ValueError(f"El participante {participacion.name} no está registrado o ha entregado un qudit incorrecto.")
 
         r = self.reconstruccion
         l = self.longitud_secreto
         qc = self.__circuito
-        # Obetener los elementos asociados a cada participante. Es necesario ordenar para que al hacer la traza parcial se mantenga el orden del secreto
+        # Obtener los elementos asociados a cada participante. Es necesario ordenar para que al hacer la traza parcial se mantenga el orden del secreto
         participaciones_ordenadas = sorted(participaciones[:r], key=lambda p: self.participantes_numero[p.name])
         elementos_ordenados = [self.participantes_numero[participacion.name] for participacion in participaciones_ordenadas]
         elementos_resto = self.cuerpo(np.setdiff1d(np.arange(2*r), elementos_ordenados))
