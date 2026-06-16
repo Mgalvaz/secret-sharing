@@ -1,6 +1,6 @@
 import numpy as np
 from qiskit import QuantumCircuit, QuantumRegister
-from qiskit.quantum_info import partial_trace, Statevector
+from qiskit.quantum_info import partial_trace
 from qiskit.circuit.library import LinearFunction
 from qiskit_aer import StatevectorSimulator
 
@@ -117,7 +117,6 @@ class Ogawa:
         # Procedimiento estandar
         if len(self.__participaciones_anticipadas) == 0:
             x = np.arange(1, 2*r-l+1)
-            x = np.array([1,6,2,3])
             qc.initialize(secreto, self.__participaciones[:l])  # Inicializar el secreto
             for participacion in self.__participaciones[l:r]:  # Superponer todos los posibles valores de los coeficientes del polinomio
                 qc.h(participacion)

@@ -1,7 +1,7 @@
 import numpy as np
 from galois import Poly, lagrange_poly
 
-from utils import *
+from utils import array_aleatorio, polinomio_aleatorio, bytes_a_int, int_a_bytes, int_a_b64str, b64str_a_int
 
 
 class ShamirRampa:

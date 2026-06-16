@@ -93,3 +93,23 @@ def extender_matriz(matriz):
     matriz_gf2 = matriz_nueva_base.vector() # Se toma la representacion de cada elemento de la matriz en el nuevo cuerpo
     matriz_gf2 = np.transpose(matriz_gf2, (0, 2, 1)).reshape(shape_final) # Alineación de dimensiones
     return matriz_gf2.view(np.ndarray).astype(bool) # Se devuelve la matriz extendida en formato booleano
+
+def pedir_entero(pregunta, mensaje_error, condicion):
+    """
+    Pide por consola un número entero y valida su valor.
+    :param pregunta: Mensaje que se muestra por pantalla para pedir el número.
+    :param mensaje_error: Mensaje que se muestr apor pantalla si el número no cumple la condición.
+    :param condicion: Función que recibe el entero introducido y devuelve True si es válido y False si no.
+    :return: El número entero introducido y válido.
+    """
+    while True:
+        try:
+            num = int(input(pregunta))
+        except ValueError:
+            print('No se ha introducido un número válido.')
+        else:  # Se ejecuta si no ha habido ninguna excepcion
+            if not condicion(num):
+                print(mensaje_error)
+            else:
+                print() # Imprimir espacio en blaco para mejor claridad visual
+                return num
