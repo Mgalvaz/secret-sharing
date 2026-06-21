@@ -53,7 +53,7 @@ class Shamir:
             conjunto_nombres_anticipados = set(list(zip(*self.__participaciones_anticipadas))[0])
             for nombre in participantes_anticipados:
                 if nombre in conjunto_nombres_anticipados:
-                    raise ValueError(f'El participante {nombre} ya ha recibido una participación anticipada.')
+                    raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
         self._verificar_nombres(participantes_anticipados)
         if self.reconstruccion - len(self.__participaciones_anticipadas) <= len(participantes_anticipados):
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1})')
@@ -76,6 +76,8 @@ class Shamir:
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         secreto_i = bytes_a_int(secreto)
+        if secreto_i >= self.cuerpo.order:
+            raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order})')
 
         # Procedimiento estandar
         if len(self.__participaciones_anticipadas) == 0:
@@ -161,7 +163,7 @@ class Shamir:
         conjunto_nombres = self.participantes_numero
         for nombre in nombres:
             if nombre not in conjunto_nombres:
-                raise ValueError(f'El participante {nombre} no está registrado.')
+                raise ValueError(f"El participante '{nombre}' no está registrado.")
 
 
 class Simplificado:
@@ -207,7 +209,7 @@ class Simplificado:
             conjunto_nombres_anticipados = set(list(zip(*self.__participaciones_anticipadas))[0])
             for nombre in participantes_anticipados:
                 if nombre in conjunto_nombres_anticipados:
-                    raise ValueError(f'El participante {nombre} ya ha recibido una participación anticipada.')
+                    raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
         self._verificar_nombres(participantes_anticipados)
         if len(self.participantes) - len(self.__participaciones_anticipadas) <= len(participantes_anticipados):
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({len(self.participantes) - 1})')
@@ -230,6 +232,8 @@ class Simplificado:
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         secreto_i = bytes_a_int(secreto)
+        if secreto_i >= self.cuerpo.order:
+            raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order})')
 
         # Proceso estándar
         if len(self.__participaciones_anticipadas) == 0:
@@ -281,4 +285,4 @@ class Simplificado:
         conjunto_nombres = set(self.participantes)
         for nombre in nombres:
             if nombre not in conjunto_nombres:
-                raise ValueError(f'El participante {nombre} no está registrado.')
+                raise ValueError(f"El participante '{nombre}' no está registrado.")

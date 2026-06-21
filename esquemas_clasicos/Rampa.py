@@ -30,12 +30,12 @@ class ShamirRampa:
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
-        if len(participantes) < r:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
-        if r <= l:
-            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
         if  l < 2:
             raise ValueError(f'La longitud del secreto ({l}) debe ser mayor que 1.')
+        if r <= l:
+            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
+        if len(participantes) < r:
+            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
 
         self.cuerpo = cuerpo
         self.reconstruccion = r
@@ -59,7 +59,7 @@ class ShamirRampa:
             conjunto_nombres_anticipados = set(list(zip(*self.__participaciones_anticipadas))[0])
             for nombre in participantes_anticipados:
                 if nombre in conjunto_nombres_anticipados:
-                    raise ValueError(f'El participante {nombre} ya ha recibido una participación anticipada.')
+                    raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
         self._verificar_nombres(participantes_anticipados)
         if self.reconstruccion - self.longitud_secreto < len(participantes_anticipados) + len(self.__participaciones_anticipadas):
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto})')
@@ -84,8 +84,11 @@ class ShamirRampa:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if len(secreto) != self.longitud_secreto:
             raise ValueError(f'Se esperaba un secreto de longitud {self.longitud_secreto}, pero se ha recibido uno de longitud {len(secreto)}.')
-
         secreto_i = bytes_a_int(secreto)
+        for i, sec in enumerate(secreto_i, 1):
+            if sec >= self.cuerpo.order:
+                raise ValueError(f'El secreto proporcionado nº{i}  debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order})')
+
         # Procedimiento estandar
         if len(self.__participaciones_anticipadas) == 0:
             polinomio = Poly(secreto_i + array_aleatorio(self.cuerpo.order, self.reconstruccion - self.longitud_secreto), field=self.cuerpo, order='asc')
@@ -144,7 +147,7 @@ class ShamirRampa:
         conjunto_nombres = self.participantes_numero
         for nombre in nombres:
             if nombre not in conjunto_nombres:
-                raise ValueError(f"El participante {nombre} no está registrado.")
+                raise ValueError(f"El participante '{nombre}' no está registrado.")
 
 class McElieceSarwate:
     r"""
@@ -172,12 +175,12 @@ class McElieceSarwate:
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor o igual que el orden del cuerpo de trabajo menos la longitud del secreto ({cuerpo.order - l}).')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
-        if len(participantes) < r:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
-        if r <= l:
-            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
         if  l < 2:
             raise ValueError(f'La longitud del secreto ({l}) debe ser mayor que 1.')
+        if r <= l:
+            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
+        if len(participantes) < r:
+            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
 
         self.cuerpo = cuerpo
         self.reconstruccion = r
@@ -201,7 +204,7 @@ class McElieceSarwate:
             conjunto_nombres_anticipados = set(list(zip(*self.__participaciones_anticipadas))[0])
             for nombre in participantes_anticipados:
                 if nombre in conjunto_nombres_anticipados:
-                    raise ValueError(f'El participante {nombre} ya ha recibido una participación anticipada.')
+                    raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
         self._verificar_nombres(participantes_anticipados)
         if self.reconstruccion - self.longitud_secreto < len(participantes_anticipados) + len(self.__participaciones_anticipadas):
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto})')
@@ -226,14 +229,17 @@ class McElieceSarwate:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if len(secreto) != self.longitud_secreto:
             raise ValueError(f'Se esperaba un secreto de longitud {self.longitud_secreto}, pero se ha recibido uno de longitud {len(secreto)}.')
+        secreto_i = bytes_a_int(secreto)
+        for i, sec in enumerate(secreto_i, 1):
+            if sec >= self.cuerpo.order:
+                raise ValueError(f'El secreto proporcionado nº{i}  debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order})')
 
-        secreto_i = self.cuerpo(bytes_a_int(secreto))
         alpha = self.cuerpo.Range(0, self.longitud_secreto)
         # Procedimiento estandar
         if len(self.__participaciones_anticipadas) == 0:
             x = np.arange(self.longitud_secreto, len(self.participantes_nombre))
             # Hay que construir un polinomio que interpole al secreto en sus respectivos puntos y que sea de grado r - 1
-            lagrange = lagrange_poly(alpha, secreto_i)
+            lagrange = lagrange_poly(alpha, self.cuerpo(secreto_i))
             polinomio = lagrange + Poly.Roots(alpha, field=self.cuerpo) * polinomio_aleatorio(self.cuerpo,self.reconstruccion - self.longitud_secreto - 1)
         # Compartición anticipada
         else:
@@ -312,9 +318,9 @@ class McElieceSarwate:
         """
         # Comprobar no elementos duplicados
         if len(nombres) != len(set(nombres)):
-            raise ValueError(f"Se han encontrado participantes duplicados.")
+            raise ValueError(f'Se han encontrado participantes duplicados.')
         # Comprobar que los participantes existen
         conjunto_nombres = self.participantes_numero
         for nombre in nombres:
             if nombre not in conjunto_nombres:
-                raise ValueError(f"El participante {nombre} no está registrado.")
+                raise ValueError(f"El participante '{nombre}' no está registrado.")

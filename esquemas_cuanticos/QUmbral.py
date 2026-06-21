@@ -36,10 +36,10 @@ class CGL:
             raise ValueError(f'El numero de participantes totales ({2*r-1}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
-        if len(participantes) < r:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
         if r < 2:
             raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser mayor que 1.')
+        if len(participantes) < r:
+            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
 
         self.cuerpo = cuerpo
         self.reconstruccion = r
@@ -68,7 +68,7 @@ class CGL:
             raise ValueError(f'Se han encontrado participantes duplicados.')
         for nombre in participantes_anticipados:
             if nombre not in self.participantes_numero:
-                raise ValueError(f'El participante {nombre} no está registrado.')
+                raise ValueError(f"El participante '{nombre}' no está registrado.")
         if self.reconstruccion <= len(participantes_anticipados):
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1})')
 
@@ -156,7 +156,7 @@ class CGL:
         conjunto_participaciones = set(self.__participaciones)
         for participacion in participaciones:
             if participacion not in conjunto_participaciones:
-                raise ValueError(f"El participante {participacion.name} no está registrado o ha entregado un qudit incorrecto.")
+                raise ValueError(f"El participante '{participacion.name}' no está registrado o ha entregado un qudit incorrecto.")
 
         r = self.reconstruccion
         qc = self.__circuito

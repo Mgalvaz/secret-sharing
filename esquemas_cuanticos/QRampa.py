@@ -37,12 +37,12 @@ class Ogawa:
             raise ValueError(f'El numero de participantes totales ({2*r-l}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
-        if len(participantes) < r:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
-        if r <= l:
-            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
         if l < 2:
             raise ValueError(f'La longitud del secreto ({l}) debe ser mayor que 1.')
+        if r <= l:
+            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
+        if len(participantes) < r:
+            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
 
         self.cuerpo = cuerpo
         self.reconstruccion = r
@@ -72,7 +72,7 @@ class Ogawa:
             raise ValueError(f'Se han encontrado participantes duplicados.')
         for nombre in participantes_anticipados:
             if nombre not in self.participantes_numero:
-                raise ValueError(f'El participante {nombre} no está registrado.')
+                raise ValueError(f"El participante '{nombre}' no está registrado.")
         if self.reconstruccion - self.longitud_secreto < len(participantes_anticipados):
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto})')
 
@@ -162,7 +162,7 @@ class Ogawa:
         conjunto_participaciones = set(self.__participaciones)
         for participacion in participaciones:
             if participacion not in conjunto_participaciones:
-                raise ValueError(f"El participante {participacion.name} no está registrado o ha entregado un qudit incorrecto.")
+                raise ValueError(f"El participante '{participacion.name}' no está registrado o ha entregado un qudit incorrecto.")
 
         r = self.reconstruccion
         l = self.longitud_secreto
@@ -211,12 +211,12 @@ class ZhangMatsumoto:
             raise ValueError(f'El numero de participantes totales ({2*r-l}) debe ser menor que el orden del cuerpo de trabajo menos la longitud del secreto ({cuerpo.order - l}).')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
-        if len(participantes) < r:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
-        if r <= l:
-            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
         if l < 2:
             raise ValueError(f'La longitud del secreto ({l}) debe ser mayor que 1.')
+        if r <= l:
+            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
+        if len(participantes) < r:
+            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
 
         self.cuerpo = cuerpo
         self.reconstruccion = r
@@ -246,7 +246,7 @@ class ZhangMatsumoto:
             raise ValueError(f'Se han encontrado participantes duplicados.')
         for nombre in participantes_anticipados:
             if nombre not in self.participantes_numero:
-                raise ValueError(f'El participante {nombre} no está registrado.')
+                raise ValueError(f"El participante '{nombre}' no está registrado.")
         if self.reconstruccion - self.longitud_secreto < len(participantes_anticipados):
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto})')
 
@@ -338,7 +338,7 @@ class ZhangMatsumoto:
         conjunto_participaciones = set(self.__participaciones)
         for participacion in participaciones:
             if participacion not in conjunto_participaciones:
-                raise ValueError(f"El participante {participacion.name} no está registrado o ha entregado un qudit incorrecto.")
+                raise ValueError(f"El participante '{participacion.name}' no está registrado o ha entregado un qudit incorrecto.")
 
         r = self.reconstruccion
         l = self.longitud_secreto
