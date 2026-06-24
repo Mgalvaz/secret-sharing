@@ -240,16 +240,16 @@ print('#' * 80)
 print('=' * 80)
 print('Entregar participantes duplicados')
 print('=' * 80)
-validacion_participaciones(Simplificado, GF(2, 3), 4, l=2, participantes=['a', 'b', 'c', 'd'], opcion='d')
+validacion_participaciones(Simplificado, GF(2, 3), r=4, l=2, participantes=['a', 'b', 'c', 'd'], opcion='d')
 for Esquema in clasico_umbral + clasico_rampa + cuantico_umbral + cuantico_rampa:
-    validacion_participaciones(Esquema, GF(2, 3), 3, l=2, participantes=['a', 'b', 'c', 'd'], opcion='d')
+    validacion_participaciones(Esquema, GF(2, 3), r=3, l=2, participantes=['a', 'b', 'c', 'd'], opcion='d')
 
 print('=' * 80)
 print('Entregar participantes inexistentes')
 print('=' * 80)
-validacion_participaciones(Simplificado, GF(2, 3), 4, l=2, participantes=['a', 'b', 'c', 'd'], opcion='ne')
+validacion_participaciones(Simplificado, GF(2, 3), r=4, l=2, participantes=['a', 'b', 'c', 'd'], opcion='ne')
 for Esquema in clasico_umbral + clasico_rampa + cuantico_umbral + cuantico_rampa:
-    validacion_participaciones(Esquema, GF(2, 3), 3, l=2, participantes=['a', 'b', 'c', 'd'], opcion='ne')
+    validacion_participaciones(Esquema, GF(2, 3), r=3, l=2, participantes=['a', 'b', 'c', 'd'], opcion='ne')
 
 print('=' * 80)
 print('Número insuficiente de participantes (r = 4)')
@@ -264,14 +264,14 @@ print('=' * 80)
 print('Entregar participantes duplicados')
 print('=' * 80)
 for Esquema in [Simplificado] + clasico_umbral + clasico_rampa + cuantico_umbral + cuantico_rampa:
-    validacion_participaciones_anticipadas(Esquema, GF(2, 3), 3, l=2, participantes=['a', 'b', 'c', 'd'], opcion='d')
+    validacion_participaciones_anticipadas(Esquema, GF(2, 3), r=3, l=2, participantes=['a', 'b', 'c', 'd'], opcion='d')
 
 print('=' * 80)
 print('Entregar participantes inexistentes')
 print('=' * 80)
 validacion_participaciones(Simplificado, GF(2, 3), 4, l=2, participantes=['a', 'b', 'c', 'd'], opcion='ne')
 for Esquema in [Simplificado] + clasico_umbral + clasico_rampa + cuantico_umbral + cuantico_rampa:
-    validacion_participaciones_anticipadas(Esquema, GF(2, 3), 3, l=2, participantes=['a', 'b', 'c', 'd'], opcion='ne')
+    validacion_participaciones_anticipadas(Esquema, GF(2, 3), r=3, l=2, participantes=['a', 'b', 'c', 'd'], opcion='ne')
 
 print('=' * 80)
 print('Pedir más participaciones anticipadas de las esperadas')
