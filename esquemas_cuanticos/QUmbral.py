@@ -1,5 +1,5 @@
 import numpy as np
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumCircuit, QuantumRegister, transpile
 from qiskit.quantum_info import partial_trace
 from qiskit.circuit.library import LinearFunction
 from qiskit_aer import StatevectorSimulator
@@ -132,7 +132,6 @@ class CGL:
             matriz = extender_matriz(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
-        self.__circuito = qc.decompose('Linear_function')
         self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
         # Generar el resto de las participaciones reales
         return list(self.__participaciones[i-1] for i in x[x <= len(self.participantes_numero)])
@@ -168,7 +167,7 @@ class CGL:
         matriz_p2 = elementos_resto[:,None]**np.arange(r) # Matriz del segundo paso del procediemiento de decodificacion
         matriz = extender_matriz(matriz_p2@matriz_p1)
         qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
-        sv = sim.run(qc.decompose('Linear_function')).result().get_statevector()
+        sv = sim.run(transpile(qc, backend=sim)).result().get_statevector()
         elementos_traza = list(range((int(elementos[0])-1)*self.cuerpo.degree)) + list(range(int(elementos[0])*self.cuerpo.degree, (2*r-1)*self.cuerpo.degree))  # Posicion de los qubits a trazar
         self.__circuito = None  # Indicar que ya se ha realizado el procedimiento de decodificación
         return partial_trace(sv, elementos_traza).to_statevector()

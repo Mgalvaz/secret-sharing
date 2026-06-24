@@ -1,5 +1,5 @@
 import numpy as np
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumCircuit, QuantumRegister, transpile
 from qiskit.quantum_info import partial_trace
 from qiskit.circuit.library import LinearFunction
 from qiskit_aer import StatevectorSimulator
@@ -138,7 +138,6 @@ class Ogawa:
             matriz = extender_matriz(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
-        self.__circuito = qc.decompose('Linear_function')
         self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
         # Generar el resto de las participaciones reales
         return list(self.__participaciones[i-1] for i in x[x <= len(self.participantes_numero)])
@@ -177,7 +176,7 @@ class Ogawa:
         matriz_p2 = self.cuerpo(np.vstack([np.column_stack([np.eye(l), np.zeros((l, r-l))]), vandermonde])) # Matriz del segundo paso del procedimiento de decodificacion
         matriz = extender_matriz(matriz_p2@matriz_p1)
         qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
-        sv = sim.run(qc.decompose('Linear_function')).result().get_statevector()
+        sv = sim.run(transpile(qc, backend=sim)).result().get_statevector()
         elementos_traza = np.setdiff1d(range((2*r-l)*self.cuerpo.degree), np.concatenate([range((i-1)*self.cuerpo.degree, i*self.cuerpo.degree) for i in elementos_ordenados[:l]])) # Posicion de los qubits a trazar
         self.__circuito = None  # Indicar que ya se ha realizado el procedimiento de decodificación
         return partial_trace(sv, elementos_traza.tolist()).to_statevector()
@@ -297,7 +296,6 @@ class ZhangMatsumoto:
             matriz_1 = np.linalg.inv(self.cuerpo.Range(0,r)[:, None] ** np.arange(r)) # Obtener todos los polinomios que en A valen el secreto
             participantes_polinomio = [qubit for participacion in self.__participaciones[:r] for qubit in reversed(participacion)]
             qc.append(LinearFunction(extender_matriz(matriz_1)), participantes_polinomio)  # Aplicar matriz que obtiene E_r(A,s)
-            qc = qc.decompose('Linear_function')
             vandermonde = self.cuerpo(x)[:, None] ** np.arange(r) # Evaluar en cada registro los polinomios en los elementos de los participantes
             matriz_2 = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-l), np.zeros((r, r-l))])])) # Matriz de evaluación
             matriz = extender_matriz(matriz_2)
@@ -314,7 +312,6 @@ class ZhangMatsumoto:
             matriz = extender_matriz(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
-        self.__circuito = qc.decompose('Linear_function')
         self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
         # Generar el resto de las participaciones reales
         return list(self.__participaciones[i-l] for i in x[x < len(self.participantes_numero)+l])
@@ -352,7 +349,7 @@ class ZhangMatsumoto:
         matriz_p2 = elementos_resto[:,None]**np.arange(r) # Matriz del segundo paso del procedimiento de decodificacion
         matriz = extender_matriz(matriz_p2@matriz_p1)
         qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
-        sv = sim.run(qc.decompose('Linear_function')).result().get_statevector()
+        sv = sim.run(transpile(qc, backend=sim)).result().get_statevector()
         elementos_traza = np.setdiff1d(range((2 * r - l) * self.cuerpo.degree), np.concatenate([range((i-l) * self.cuerpo.degree, (i-l+1) * self.cuerpo.degree) for i in elementos_ordenados[:l]]))  # Posicion de los qubits a trazar
         self.__circuito = None  # Indicar que ya se ha realizado el procedimiento de decodificación
         return partial_trace(sv, elementos_traza.tolist()).to_statevector()
