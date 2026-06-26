@@ -1,7 +1,9 @@
 from esquemas_clasicos import Simplificado, Shamir, ShamirRampa, McElieceSarwate
 from esquemas_cuanticos import CGL, Ogawa, ZhangMatsumoto
 
+from qiskit import transpile
 from qiskit.quantum_info import Statevector
+from qiskit_aer import StatevectorSimulator
 from galois import GF, Poly, lagrange_poly
 
 from utils import bytes_a_int, int_a_bytes
@@ -10,7 +12,7 @@ import numpy as np
 import random
 import itertools
 
-
+sim = StatevectorSimulator()
 nombres_esq = {
     'Simplificado': 'Esquema Simplificado',
     'Shamir': 'Esquema de Shamir',
@@ -119,7 +121,8 @@ def funcionamiento_cuantico(Esquema, cuerpo, r=None, l=None, participantes=None)
             funcion = lambda gf, s, r: construir_polinomios_E(gf, np.arange(l),s, r)
     print('Secreto =', secreto.to_dict())
     participaciones = esquema.codificacion(secreto)
-    estado_codificado = Statevector(getattr(esquema,f'_{Esquema.__name__}__circuito'))
+    qc = transpile(getattr(esquema,f'_{Esquema.__name__}__circuito'), backend=sim)
+    estado_codificado = sim.run(qc).result().get_statevector()
     estados_codificado = Statevector(estado_codificado.data, dims=tuple(cuerpo.order for _ in range(len(m)))).to_dict().keys()
     print('Estados base codificado:', estados_codificado)
     estados_matematicos = [''.join(f(m).view(np.ndarray).astype(str)) for s in secreto_vector for f in funcion(cuerpo, s, r)]
@@ -166,7 +169,8 @@ def comparticion_anticipada_cuantico(Esquema, cuerpo, r=None, l=None, participan
     print('Participaciones anticipadas:', participaciones_anticipadas)
     print('Secreto =', secreto.to_dict())
     participaciones = esquema.codificacion(secreto)
-    estado_codificado = Statevector(getattr(esquema,f'_{Esquema.__name__}__circuito'))
+    qc = transpile(getattr(esquema, f'_{Esquema.__name__}__circuito'), backend=sim)
+    estado_codificado = sim.run(qc).result().get_statevector()
     estados_codificado = Statevector(estado_codificado.data, dims=tuple(cuerpo.order for _ in range(len(m)))).to_dict().keys()
     print('Estados base codificado:', estados_codificado)
     estados_matematicos = [''.join(f(m).view(np.ndarray).astype(str)) for s in secreto_vector for f in funcion(cuerpo, s, r)]
