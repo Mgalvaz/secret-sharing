@@ -64,7 +64,7 @@ def funcionamiento_clasico(Esquema, cuerpo, r=None, l=None, participantes=None):
     print('Secreto decodificado =', bytes_a_int(sec))
     print()
 
-def comparticion_anticipada_clasico(Esquema, cuerpo, r=None, l=None, participantes=None):
+def comparticion_anticipada_clasico(Esquema, cuerpo, r=None, l=None, participantes=None, sobran=0):
     print('=' * 80)
     print(f'[Test] {nombres_esq[Esquema.__name__]}: compartición anticipada')
     print('=' * 80)
@@ -72,15 +72,15 @@ def comparticion_anticipada_clasico(Esquema, cuerpo, r=None, l=None, participant
         esquema = Esquema(cuerpo, participantes)
         secreto = random.randint(0, cuerpo.order - 1)
         r = len(participantes)
-        anticipados = random.sample(participantes, r - 1)
+        anticipados = random.sample(participantes, r - 1 - sobran)
     elif Esquema in clasico_umbral:
         esquema = Esquema(cuerpo, r, participantes)
         secreto = random.randint(0, cuerpo.order-1)
-        anticipados = random.sample(participantes, r - 1)
+        anticipados = random.sample(participantes, r - 1 - sobran)
     else:
         esquema = Esquema(cuerpo, r, l, participantes)
         secreto = [random.randint(0, cuerpo.order-1) for _ in range(l)]
-        anticipados = random.sample(participantes, r - l)
+        anticipados = random.sample(participantes, r - l - sobran)
     participaciones_anticipadas = esquema.comparticion_anticipada(anticipados)
     print('Participaciones anticipadas:', participaciones_anticipadas)
     print('Secreto =', secreto)
@@ -126,7 +126,7 @@ def funcionamiento_cuantico(Esquema, cuerpo, r=None, l=None, participantes=None)
     estados_codificado = Statevector(estado_codificado.data, dims=tuple(cuerpo.order for _ in range(len(m)))).to_dict().keys()
     print('Estados base codificado:', estados_codificado)
     estados_matematicos = [''.join(f(m).view(np.ndarray).astype(str)) for s in secreto_vector for f in funcion(cuerpo, s, r)]
-    print('Estados base matematica;', estados_matematicos)
+    print('Estados base matematica:', estados_matematicos)
     print('Estados matemáticos == estados codificados:', set(estados_matematicos) == estados_codificado)
     print('Participaciones:', participaciones)
     part = random.sample(participaciones, r)
@@ -174,7 +174,7 @@ def comparticion_anticipada_cuantico(Esquema, cuerpo, r=None, l=None, participan
     estados_codificado = Statevector(estado_codificado.data, dims=tuple(cuerpo.order for _ in range(len(m)))).to_dict().keys()
     print('Estados base codificado:', estados_codificado)
     estados_matematicos = [''.join(f(m).view(np.ndarray).astype(str)) for s in secreto_vector for f in funcion(cuerpo, s, r)]
-    print('Estados base matematica;', estados_matematicos)
+    print('Estados base matematica:', estados_matematicos)
     print('Estados matemáticos == estados codificados:', set(estados_matematicos) == estados_codificado)
     print('Participaciones:', participaciones)
     part = random.sample(participaciones + participaciones_anticipadas, r)
@@ -192,10 +192,16 @@ for Esquema in [Simplificado] + clasico_umbral + clasico_rampa:
     funcionamiento_clasico(Esquema, GF(2, 8*10), r=5, l=3, participantes=['a', 'b', 'c', 'd', 'e', 'f'])
 
 print('#' * 80)
-print(' ' * 15 + 'COMPARTICIÓN ANTICIPADA DE LOS ESQUEMAS CLÁSICOS')
+print(' ' * 12 + 'COMPARTICIÓN ANTICIPADA EXACTA DE LOS ESQUEMAS CLÁSICOS')
 print('#' * 80)
 for Esquema in [Simplificado] + clasico_umbral + clasico_rampa:
     comparticion_anticipada_clasico(Esquema, GF(2, 8 * 6), r=5, l=2, participantes=['a', 'b', 'c', 'd', 'e', 'f'])
+
+print('#' * 80)
+print(' ' * 12 + 'COMPARTICIÓN ANTICIPADA SOBRANTE DE LOS ESQUEMAS CLÁSICOS')
+print('#' * 80)
+for Esquema in [Simplificado] + clasico_umbral + clasico_rampa:
+    comparticion_anticipada_clasico(Esquema, GF(2, 8 * 6), r=5, l=2, participantes=['a', 'b', 'c', 'd', 'e', 'f'], sobran=1)
 
 print('#' * 80)
 print(' ' * 18 + 'FUNCIONAMIENTO DE LOS ESQUEMAS CUÁNTICOS')

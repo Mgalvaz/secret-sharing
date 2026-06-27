@@ -70,7 +70,7 @@ class CGL:
             if nombre not in self.participantes_numero:
                 raise ValueError(f"El participante '{nombre}' no está registrado.")
         if self.reconstruccion <= len(participantes_anticipados):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1})')
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1}).')
 
         qc = self.__circuito
         r = self.reconstruccion
@@ -147,9 +147,9 @@ class CGL:
         if self.__circuito is None:
             raise AttributeError(f'Ya se ha realizado el procedimiento de decodificación.')
         if self.__participaciones_anticipadas is not None:
-            raise AttributeError(f'Todavía no se ha realizado el procedimiento de codificación')
+            raise AttributeError(f'Todavía no se ha realizado el procedimiento de codificación.')
         if len(participaciones) < self.reconstruccion:
-            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
+            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
         if len(participaciones) != len(set(participaciones)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
         conjunto_participaciones = set(self.__participaciones)

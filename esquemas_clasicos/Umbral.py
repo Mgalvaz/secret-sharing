@@ -56,7 +56,7 @@ class Shamir:
                     raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
         self._verificar_nombres(participantes_anticipados)
         if self.reconstruccion - len(self.__participaciones_anticipadas) <= len(participantes_anticipados):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1})')
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1}).')
 
         # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
         aleatoriedad = array_aleatorio(self.cuerpo.order, len(participantes_anticipados))
@@ -77,7 +77,7 @@ class Shamir:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         secreto_i = bytes_a_int(secreto)
         if secreto_i >= self.cuerpo.order:
-            raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order})')
+            raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
         # Procedimiento estandar
         if len(self.__participaciones_anticipadas) == 0:
@@ -135,7 +135,7 @@ class Shamir:
         # Verificación de condiciones
         r = self.reconstruccion
         if len(participaciones) < r:
-            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
+            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
         nombres, valores_b64 = zip(*participaciones[:r])
         self._verificar_nombres(nombres)
 
@@ -212,7 +212,7 @@ class Simplificado:
                     raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
         self._verificar_nombres(participantes_anticipados)
         if len(self.participantes) - len(self.__participaciones_anticipadas) <= len(participantes_anticipados):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({len(self.participantes) - 1})')
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({len(self.participantes) - 1}).')
 
         # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
         aleatoriedad = array_aleatorio(self.cuerpo.order, len(participantes_anticipados))
@@ -233,7 +233,7 @@ class Simplificado:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         secreto_i = bytes_a_int(secreto)
         if secreto_i >= self.cuerpo.order:
-            raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order})')
+            raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
         # Proceso estándar
         if len(self.__participaciones_anticipadas) == 0:
@@ -264,7 +264,7 @@ class Simplificado:
         """
         # Verificación de condiciones
         if len(participaciones) < len(self.participantes):
-            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
+            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
         nombres, valores_b64 = zip(*participaciones[:len(self.participantes)])
         self._verificar_nombres(nombres)
 

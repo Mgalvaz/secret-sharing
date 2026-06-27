@@ -62,7 +62,7 @@ class ShamirRampa:
                     raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
         self._verificar_nombres(participantes_anticipados)
         if self.reconstruccion - self.longitud_secreto < len(participantes_anticipados) + len(self.__participaciones_anticipadas):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto})')
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto}).')
 
         # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
         aleatoriedad = array_aleatorio(self.cuerpo.order, len(participantes_anticipados))
@@ -87,7 +87,7 @@ class ShamirRampa:
         secreto_i = bytes_a_int(secreto)
         for i, sec in enumerate(secreto_i, 1):
             if sec >= self.cuerpo.order:
-                raise ValueError(f'El secreto proporcionado nº{i}  debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order})')
+                raise ValueError(f'El secreto proporcionado nº{i}  debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
         # Procedimiento estandar
         if len(self.__participaciones_anticipadas) == 0:
@@ -124,7 +124,7 @@ class ShamirRampa:
         """
         # Verificación de condiciones
         if len(participaciones) < self.reconstruccion:
-            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
+            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
         nombres, valores_b64 = zip(*participaciones[:self.reconstruccion])
         self._verificar_nombres(nombres)
 
@@ -207,7 +207,7 @@ class McElieceSarwate:
                     raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
         self._verificar_nombres(participantes_anticipados)
         if self.reconstruccion - self.longitud_secreto < len(participantes_anticipados) + len(self.__participaciones_anticipadas):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto})')
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto}).')
 
         # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
         aleatoriedad = array_aleatorio(self.cuerpo.order, len(participantes_anticipados))
@@ -232,7 +232,7 @@ class McElieceSarwate:
         secreto_i = bytes_a_int(secreto)
         for i, sec in enumerate(secreto_i, 1):
             if sec >= self.cuerpo.order:
-                raise ValueError(f'El secreto proporcionado nº{i}  debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order})')
+                raise ValueError(f'El secreto proporcionado nº{i}  debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
         alpha = self.cuerpo.Range(0, self.longitud_secreto)
         # Procedimiento estandar
@@ -294,7 +294,7 @@ class McElieceSarwate:
         # Verificación de condiciones
         r = self.reconstruccion
         if len(participaciones) < r:
-            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
+            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
         nombres, valores_b64 = zip(*participaciones[:r])
         self._verificar_nombres(nombres)
 
