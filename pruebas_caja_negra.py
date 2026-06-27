@@ -32,7 +32,7 @@ def validacion_datos(Esquema, cuerpo, r=None, l=None, participantes=None):
         else:  # Si no es ninguno de los anteriores es el esquema simplificado
             Simplificado(cuerpo, participantes)
     except Exception as e:
-        print(e)
+        print(f'{type(e).__name__}: {e}')
     print()
 
 def validacion_secreto(Esquema, cuerpo, secreto, r=None, l=None, participantes=None):
@@ -46,7 +46,7 @@ def validacion_secreto(Esquema, cuerpo, secreto, r=None, l=None, participantes=N
     try:
         ss.codificacion(secreto)
     except Exception as e:
-        print(e)
+        print(f'{type(e).__name__}: {e}')
     print()
 
 def validacion_participaciones(Esquema, cuerpo, r=None, l=None, participantes=None, opcion='ne'):
@@ -81,7 +81,7 @@ def validacion_participaciones(Esquema, cuerpo, r=None, l=None, participantes=No
     try:
         ss.decodificacion(part)
     except Exception as e:
-        print(e)
+        print(f'{type(e).__name__}: {e}')
     print()
 
 def validacion_participaciones_anticipadas(Esquema, cuerpo, r=None, l=None, participantes=None, opcion='dp'):
@@ -110,7 +110,7 @@ def validacion_participaciones_anticipadas(Esquema, cuerpo, r=None, l=None, part
         else: # Si no es ninguno, se entregan más de los esperados
             ss.comparticion_anticipada(participantes)
     except Exception as e:
-        print(e)
+        print(f'{type(e).__name__}: {e}')
     print()
 
 def validacion_orden(Esquema, cuerpo, r=None, l=None, participantes=None, orden='dc'):
@@ -147,7 +147,7 @@ def validacion_orden(Esquema, cuerpo, r=None, l=None, participantes=None, orden=
             ss.comparticion_anticipada(['a'])
             ss.comparticion_anticipada(['a'])
     except Exception as e:
-        print(e)
+        print(f'{type(e).__name__}: {e}')
     print()
 
 print('#' * 80)
@@ -167,7 +167,7 @@ for Esquema in [Simplificado] + clasico_umbral + clasico_rampa + cuantico_umbral
     validacion_datos(Esquema, GF(2, 4), r=2, l=2, participantes=['a', 'a'])
 
 print('=' * 80)
-print('Cuerpo demasido pequeño')
+print('Cuerpo demasiado pequeño')
 print('=' * 80)
 print('Esquemas de Shamir y Shamir en rampa (q = 4, n = 4)')
 for Esquema in [Shamir, ShamirRampa]:
