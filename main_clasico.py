@@ -4,18 +4,18 @@ from galois import GF
 from utils import pedir_entero
 
 def programa_clasico():
-    cuerpo = GF(2 ** 64)
+    cuerpo = GF(2, 64)
 
     # Pedir los participantes y los datos del esquema
     participantes = []
     n = pedir_entero('Escriba el número de particiantes: ',
-                       f'El número de participantes debe ser al menos 2.', lambda x: 2 <= x)
+                       f'El número de participantes debe ser al menos 2 y menor que el orden del cuerpo de trabajo ({cuerpo.characteristic}^{cuerpo.degree})', lambda x: 2 <= x < cuerpo.order)
     for i in range(n):
         participante = input(f'Escriba el nombre del participante nº{i + 1}: ')
         while participante in participantes:
             participante = input(f'El participante introducido ya existe, por favor introduzca otro: ')
         participantes.append(participante)
-    print() # Imprimir espacio en blaco para mejor claridad visual
+    print() # Imprimir espacio en blanco para mejor claridad visual
 
     r = pedir_entero('Escriba número de participantes necesarios para recuperar el secreto: ',
                        f'El número de participantes necesarios para recuperar el secreto debe ser al menos 2 y menor o igual que el número de participantes ({n})', lambda x: 2 <= x <= n )
@@ -40,7 +40,12 @@ def programa_clasico():
         if esq == 1:
             ss = ShamirRampa(cuerpo, r, l, participantes)
         else:
-            ss = McElieceSarwate(cuerpo, r, l, participantes)
+            if n+l > cuerpo.order:
+                print('Debido a que el número de participantes es mayor que el orden del cuerpo menos la longitud del secreto, no se puede realizar el esquema de McEliece-Sarwate, se procede con el esquema de Shamir en rampa.')
+                print()
+                ss = ShamirRampa(cuerpo, r, l, participantes)
+            else:
+                ss = McElieceSarwate(cuerpo, r, l, participantes)
 
     # Preguntar por participaciones anticipadas
     yn = input('¿Desea repartir participaciones anticipadas? (y/n): ')
