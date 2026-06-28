@@ -17,7 +17,7 @@ class Ogawa:
 
         .. ipython:: python
 
-            cuerpo = galois.GF(2**5)
+            cuerpo = galois.GF(2, 5)
             qss = Ogawa(cuerpo, 4, 3, ['a', 'b', 'c', 'd', 'e'])
     """
     def __init__(self, cuerpo, r, l, participantes):
@@ -190,7 +190,7 @@ class ZhangMatsumoto:
 
         .. ipython:: python
 
-            cuerpo = galois.GF(2**5)
+            cuerpo = galois.GF(2, 5)
             qss = ZhangMatsumoto(cuerpo, 4, 3, ['a', 'b', 'c', 'd', 'e'])
     """
     def __init__(self, cuerpo, r, l, participantes):
@@ -207,7 +207,7 @@ class ZhangMatsumoto:
         if 2*r-l < len(participantes):
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor o igual a 2*r-l ({2*r-l}).')
         if cuerpo.order < 2*r:
-            raise ValueError(f'El numero de participantes totales ({2*r-l}) debe ser menor que el orden del cuerpo de trabajo menos la longitud del secreto ({cuerpo.order - l}).')
+            raise ValueError(f'El numero de participantes totales ({2*r-l}) debe ser menor o igual que el orden del cuerpo de trabajo menos la longitud del secreto ({cuerpo.order - l}).')
         if len(participantes) != len(set(participantes)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
         if l < 2:

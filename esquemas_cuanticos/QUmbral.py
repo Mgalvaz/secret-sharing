@@ -17,7 +17,7 @@ class CGL:
 
         .. ipython:: python
 
-            cuerpo = galois.GF(2**5)
+            cuerpo = galois.GF(2, 5)
             qss = CGL(cuerpo, 4, ['a', 'b', 'c', 'd', 'e', 'f'])
     """
     def __init__(self, cuerpo, r, participantes):

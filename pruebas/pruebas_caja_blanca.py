@@ -207,7 +207,7 @@ print('#' * 80)
 print(' ' * 18 + 'FUNCIONAMIENTO DE LOS ESQUEMAS CUÁNTICOS')
 print('#' * 80)
 for Esquema in cuantico_umbral + cuantico_rampa:
-    funcionamiento_cuantico(Esquema, GF(2,3), r=3, l=2, participantes=['a', 'b', 'c', 'd'])
+    funcionamiento_cuantico(Esquema, GF(2, 3), r=3, l=2, participantes=['a', 'b', 'c', 'd'])
 
 print('#' * 80)
 print(' ' * 15 + 'COMPARTICIÓN ANTICIPADA DE LOS ESQUEMAS CUÁNTICOS')

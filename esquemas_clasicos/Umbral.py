@@ -12,7 +12,7 @@ class Shamir:
 
         .. ipython:: python
 
-            cuerpo = galois.GF(3**5)
+            cuerpo = galois.GF(3, 5)
             sh = Shamir(cuerpo, 4, ['a', 'b', 'c', 'd', 'e', 'f'])
     """
     def __init__(self, cuerpo, r, participantes):
@@ -175,7 +175,7 @@ class Simplificado:
 
         .. ipython:: python
 
-            cuerpo = galois.GF(5**4)
+            cuerpo = galois.GF(5, 4)
             sh = Simplificado(cuerpo, ['a', 'b', 'c', 'd', 'e'])
     """
     def __init__(self, cuerpo, participantes):

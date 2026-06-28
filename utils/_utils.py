@@ -81,11 +81,13 @@ def polinomio_aleatorio(cuerpo, grado):
 
 def extender_matriz(matriz):
     """
-
-    :param matriz:
-    :return:
+    Obtiene la extensión de la matriz proporcionada formada por la representación matricial de cada uno de sus elementos en el cuerpo base y se convierte a formato booleano.
+    :param matriz: Matriz sobre el cuerpo GF(2, m) a extender.
+    :return: La matriz extendida sobre el cuerpo base, GF(2).
     """
     gf = type(matriz)  # Obtener el cuerpo de trabajo
+    if gf.characteristic != 2:
+        raise ValueError(f'Se esperaba un cuerpo con elemento base 2, pero se ha recibido {gf.characteristic}.')
     num_bits = gf.degree
     shape_final = np.array(matriz.shape) * num_bits # Obtener la forma final de la matriz
     base = gf.primitive_element ** np.arange(num_bits-1, -1, -1) # Base del cuerpo extendido, como vector es Big Endian, se toma la base Big Endian

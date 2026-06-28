@@ -13,7 +13,7 @@ class ShamirRampa:
 
             .. ipython:: python
 
-                cuerpo = galois.GF(3**5)
+                cuerpo = galois.GF(3, 5)
                 rsh = ShamirRampa(cuerpo, 4, 3, ['a', 'b', 'c', 'd', 'e', 'f'])
         """
 
@@ -158,7 +158,7 @@ class McElieceSarwate:
 
             .. ipython:: python
 
-                cuerpo = galois.GF(3**5)
+                cuerpo = galois.GF(3, 5)
                 rsh = McElieceSarwate(cuerpo, 4, 3, ['a', 'b', 'c', 'd', 'e', 'f'])
         """
 
