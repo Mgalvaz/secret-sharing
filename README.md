@@ -1,2 +1,104 @@
-# secret-sharing
-TFG
+# Compartición de secretos
+
+Implementación en Python de diversos esquemas lineales de compartición de secretos, incluyendo esquemas clásicos y cuánticos, tanto de umbral como en rampa.
+
+Además, todos los esquemas implementados incluyen la variante de compartición anticipada, que permite distribuir algunas participaciones antes de conocer el secreto.
+
+## Características
+
+- Implementación de los esquemas clásicos de Shamir, Shamir en rampa, McEliece-Sarwate y una versión simplificada para los esquemas de umbral.
+- Implementación de los esquemas cuánticos de Cleve-Gottesman-Lo, Ogawa et al. y Zhang-Matsumoto.
+- Soporte para compartición anticipada integrado en todos los esquemas.
+- Interfaz unificada para todos los algoritmos implementados.
+
+---
+
+## Stack tecnológico
+
+El proyecto utiliza las siguientes librerías principales:
+
+| Categoría           | Librería     |
+|---------------------|--------------|
+| Cálculo numérico    | [NumPy]      |
+| Cuerpos finitos     | [galois]     |
+| Circuitos Cuánticos | [Qiskit]     |
+| Simulación cuántica | [Qiskit Aer] |
+
+
+[NumPy]:  https://github.com/numpy/numpy
+[galois]: https://github.com/mhostetter/galois
+[Qiskit]: https://github.com/Qiskit/qiskit
+[Qiskit Aer]: https://github.com/Qiskit/qiskit-aer
+
+La instalación de las dependencias se puede realizar ejecutando el siguiente comando.
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Realización de los esquemas
+
+Todas las clases creadas cuentan con tres métodos para realizar los esquemas. 
+
+Antes de nada se debe construir un objeto de la clase correspondiente.
+
+```python
+import galois
+from esquemas_clasicos import Shamir
+esquema = Shamir(galois.GF(2,30), 3, ['Ana', 'Luis', 'Juan', 'Pedro'])
+```
+
+Si se desea realizar compartición anticipada, se debe llamar al método `comparticion_anticipada` con los participantes correspondientes.
+```python
+anticipadas = esquema.comparticion_anticipada('Luis', 'Pedro')
+```
+
+Independientemente de si se ha realizado la compartición anticipada o no, en caso de querer compartir un secreto se debe llamar al método `codificacion`.
+```python
+participaciones = esquema.codificacion(b'672')
+```
+**Nota:** En caso de haber distribuido participaciones de forma anticipada, estas **no** volverán a devolverse durante la codificación.
+
+Finalmente, cualquier conjunto de tres o más participantes puede reconstruir el secreto.
+```python
+secreto = esquema.decodificacion([anticipadas[0], participaciones[1], participaciones[0]])
+```
+
+### _Script_ interactivo
+
+También se proporciona un _script_ interactivo que guía al usuario durante la ejecución del esquema, solicitando por terminal todos los parámetros necesarios.
+
+Este _script_ se puede iniciar mediante el siguiente comando.
+
+```bash
+python main.py
+```
+
+---
+
+## Estructura del proyecto
+```
+secret-sharing
+├── esquemas_clasicos
+│   ├── __init__.py
+│   ├── Rampa.py
+│   └── Umbral.py
+├── esquemas_cuanticos
+│   ├── __init__.py
+│   ├── QRampa.py
+│   └── QUmbral.py
+├── main.py
+├── main_clasico.py
+├── main_cuantico.py
+├── pruebas
+│   ├── pruebas_caja_blanca.py
+│   ├── pruebas_caja_negra.py
+│   └── pruebas_rendimiento.py
+├── README.md
+├── requirements.txt
+└── utils
+    ├── __init__.py
+    └── _utils.py
+```
