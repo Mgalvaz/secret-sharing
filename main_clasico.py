@@ -10,8 +10,8 @@ def programa_clasico():
     participantes = []
     n = pedir_entero('Escriba el número de particiantes: ',
                        f'El número de participantes debe ser al menos 2 y menor que el orden del cuerpo de trabajo ({cuerpo.characteristic}^{cuerpo.degree})', lambda x: 2 <= x < cuerpo.order)
-    for i in range(n):
-        participante = input(f'Escriba el nombre del participante nº{i + 1}: ')
+    for i in range(1, n+1):
+        participante = input(f'Escriba el nombre del participante nº{i}: ')
         while participante in participantes:
             participante = input(f'El participante introducido ya existe, por favor introduzca otro: ')
         participantes.append(participante)
@@ -54,8 +54,8 @@ def programa_clasico():
                      f'El número de participaciones anticipadas debe ser al menos 1 y menor que el parámetro de privacidad {r-l}', lambda x: 1 <= x <= r-l)
         participantes_anticipados = []
         # Añadir participantes anticipados
-        for i in range(n_anticipados):
-            part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i + 1}: ')
+        for i in range(1, n_anticipados+1):
+            part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i}: ')
             # Comporbar validez de los participantes anticipados
             while True:
                 if part_anticipado in participantes_anticipados:
@@ -64,7 +64,7 @@ def programa_clasico():
                     print('Se ha introducido un participante no registrado.')
                 else:
                     break
-                part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i + 1}: ')
+                part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i}: ')
             participantes_anticipados.append(part_anticipado)
         # Crear particpaciones anticipadas
         participaciones_anticipadas = ss.comparticion_anticipada(participantes_anticipados)
@@ -78,8 +78,8 @@ def programa_clasico():
             secreto = input('Se ha introducido un secreto con longitud de bytes mayor que 8, introduzca otro: ').encode()
     else:
         secreto = []
-        for i in range(l):
-            sec = input(f'Escriba el secreto nº{i + 1}: ').encode()
+        for i in range(1, l+1):
+            sec = input(f'Escriba el secreto nº{i}: ').encode()
             while len(sec) > 8:
                 sec = input(
                     'Se ha introducido un secreto con longitud de bytes mayor que 8, introduzca otro: ').encode()
@@ -114,9 +114,9 @@ def programa_clasico():
     secreto = ss.decodificacion(conjunto)
     try:
         if l == 1:
-            print('secreto:', secreto.decode())
+            print('Secreto:', secreto.decode())
         else:
-            print('secreto:', [s.decode() for s in secreto])
+            print('Secreto:', [s.decode() for s in secreto])
     except UnicodeDecodeError:
         print('El secreto obtenido no es válido')
 

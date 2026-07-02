@@ -6,9 +6,12 @@ import ast
 
 from utils import pedir_entero
 
-def pedir_secreto(dimension):
+def pedir_secreto(dimension, n=-1):
     while True:
-        secreto_str = input(f'Escriba el secreto en forma de lista: ')
+        if n == -1:
+            secreto_str = input(f'Escriba el secreto en forma de lista: ')
+        else:
+            secreto_str = input(f'Escriba el secreto nº{n} en forma de lista: ')
         try:
             secreto = Statevector(ast.literal_eval(secreto_str))
         except (ValueError, SyntaxError):
@@ -18,7 +21,7 @@ def pedir_secreto(dimension):
             print(
                 f'Se esperaba que el secreto tuviera dimensión {dimension}, pero se ha recibido {len(secreto)}, introduzca otro.')
         elif not secreto.is_valid():
-            print('El secreto obtenido no es válido, ¿quiere introducir otro o normalizarlo?\n1.- Introducir otro.\n2.- Normalizar')
+            print('El secreto obtenido no es válido, ¿quiere introducir otro o normalizarlo?\n1.- Introducir otro.\n2.- Normalizar.')
             op = pedir_entero(f'Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
             if op == 2:
                 norma = norm(secreto)
@@ -44,8 +47,8 @@ def programa_cuantico():
     n = pedir_entero('Escriba el número de particiantes: ',
                      f'El número de participantes debe ser como mínimo el parámetro de recostrucción ({r}) y no puede superar ({2 * r - l}).', lambda x: r <= x <= 2 * r - l)
     participantes = []
-    for i in range(n):
-        participante = input(f'Escriba el nombre del participante nº{i + 1}: ')
+    for i in range(1, n+1):
+        participante = input(f'Escriba el nombre del participante nº{i}: ')
         while participante in participantes:
             participante = input(f'El participante introducido ya existe, por favor introduzca otro: ')
         participantes.append(participante)
@@ -74,8 +77,8 @@ def programa_cuantico():
                      f'El número de participaciones anticipadas debe ser al menos 1 y menor que el parámetro de privacidad {r-l}', lambda x: 1 <= x <= r-l)
         participantes_anticipados = []
         # Añadir participantes anticipados
-        for i in range(n_anticipados):
-            part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i + 1}: ')
+        for i in range(1, n_anticipados+1):
+            part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i}: ')
             # Comporbar validez de los participantes anticipados
             while True:
                 if part_anticipado in participantes_anticipados:
@@ -84,7 +87,7 @@ def programa_cuantico():
                     print('Se ha introducido un participante no registrado.')
                 else:
                     break
-                part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i + 1}: ')
+                part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i}: ')
             participantes_anticipados.append(part_anticipado)
         # Crear particpaciones anticipadas
         participaciones_anticipadas = ss.comparticion_anticipada(participantes_anticipados)
@@ -96,14 +99,14 @@ def programa_cuantico():
     if l == 1:
         secreto = pedir_secreto(cuerpo.order)
     else:
-        print('¿Desea introducir el vector de estado compuesto o cada uno de los subsistemas?\n1.- Vector de estado global.\n2.- Separar por subsistemas')
+        print('¿Desea introducir el vector de estado compuesto o cada uno de los subsistemas?\n1.- Vector de estado global.\n2.- Separar por subsistemas.')
         elec = pedir_entero(f'Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if elec == 1:
             secreto = pedir_secreto(cuerpo.order**l)
         else:
             secreto = Statevector([1]) # Inicializamos el secreto
             for i in range(1,l+1):
-                sec_i = pedir_secreto(cuerpo.order)
+                sec_i = pedir_secreto(cuerpo.order, i)
                 secreto = secreto.tensor(sec_i)
 
     # Crear participaciones
@@ -134,7 +137,7 @@ def programa_cuantico():
     # Reconstruir el secreto
     secreto = ss.decodificacion(registros)
     secreto = Statevector(secreto, dims=tuple(cuerpo.order for _ in range(l)))
-    print('secreto:', secreto.to_dict())
+    print('Secreto:', secreto.to_dict())
 
 if __name__ == '__main__':
     programa_cuantico()
