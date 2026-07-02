@@ -306,8 +306,8 @@ class McElieceSarwate:
         coef = self.cuerpo.Zeros((self.longitud_secreto, self.reconstruccion))
         alphas = self.cuerpo.Range(0, self.longitud_secreto)[:, None]
         for i in range(self.reconstruccion):
-            numerador = np.prod(alphas - puntos[mascara[i]], axis=1)  # Productorio del numerador aj - xh
-            denominador = np.prod(puntos[i] - puntos[mascara[i]])  # Productorio del denominador xi - xh
+            numerador = np.prod(alphas - puntos[mascara[i]], axis=1)  # producto del numerador aj - xh
+            denominador = np.prod(puntos[i] - puntos[mascara[i]])  # producto del denominador xi - xh
             coef[:, i] = numerador / denominador  # Cálculo de l_i
         return int_a_bytes(np.sum(valores * coef, axis=1))  # Se devuelve la suma y_i * l_i(a_j)
 

@@ -146,8 +146,8 @@ class Shamir:
         mascara = ~np.eye(r, dtype=bool) # Máscara de los elementos x_h de la fórmula
         puntos_matriz = np.broadcast_to(puntos, (r, r)) # Matriz en la que cada fila es el array puntos
         puntos_matriz = puntos_matriz[mascara].reshape((r, r-1)).T # Al usar la mascara, la matriz se aplana, por lo que se usa reshape
-        numerador = np.prod(puntos_matriz, axis=0)  # Productorio del numerador
-        denominador = np.prod(puntos_matriz - puntos, axis=0) # Productorio del denominador
+        numerador = np.prod(puntos_matriz, axis=0)  # producto del numerador
+        denominador = np.prod(puntos_matriz - puntos, axis=0) # producto del denominador
         coef = numerador / denominador # Cálculo de l_i
         return int_a_bytes(np.sum(valores * coef)) # Se devuelve la suma y_i * l_i
 
