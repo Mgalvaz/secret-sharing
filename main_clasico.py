@@ -26,7 +26,7 @@ def programa_clasico():
     # Preguntar por el esquema que se desea usar
     if l == 1:
         if r == n:
-            yn = input('Se ha detectado que el número de participantes necesarios para reconstruir el esquema coincide con el número de participantes, ¿desea utilizar el esquema simplificado? (y/n): ')
+            yn = input('Se ha detectado que el número de participantes necesarios para reconstruir el esquema coincide con el número de participantes, ¿desea realizar el esquema simplificado? (y/n): ')
             if yn.lower() in ('si', 's', 'y', 'yes'):
                 ss = Simplificado(cuerpo, participantes)
             else:
@@ -34,7 +34,7 @@ def programa_clasico():
         else:
             ss = Shamir(cuerpo, r, participantes)
     else:
-        print('¿Cual de los dos siguientes esquemas desea usar?\n1.- Esquema de Shamir en rampa.\n2.- Esquema de McEliece-Sarwate.')
+        print('¿Cual de los dos siguientes esquemas desea realizar?\n1.- Esquema de Shamir en rampa.\n2.- Esquema de McEliece-Sarwate.')
         esq = pedir_entero('Respuesta: ',
                      f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if esq == 1:

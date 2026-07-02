@@ -54,7 +54,7 @@ def programa_cuantico():
     if l == 1:
         ss = CGL(cuerpo, r, participantes)
     else:
-        print('¿Cual de los dos siguientes esquemas desea usar?\n1.- Esquema de Ogawa et al.\n2.- Esquema de Zhang-Matsumoto.')
+        print('¿Cual de los dos siguientes esquemas desea realizar?\n1.- Esquema de Ogawa et al.\n2.- Esquema de Zhang-Matsumoto.')
         esq = pedir_entero('Respuesta: ',f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if esq == 1:
             ss = Ogawa(cuerpo, r, l, participantes)
