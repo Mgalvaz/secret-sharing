@@ -38,9 +38,9 @@ def construir_polinomios_E(gf, A, s, r):  # Genera el conjunto E_r(A,s)
     A = gf(A)
     s = gf(s)
     lagrange = lagrange_poly(A, s)
-    zeros = Poly.Roots(A, field=gf)
+    ceros = Poly.Roots(A, field=gf)
     for extra in itertools.product(range(gf.order), repeat=r - len(s)):
-        yield lagrange + zeros * Poly(extra, field=gf)
+        yield lagrange + ceros * Poly(extra, field=gf)
 
 def funcionamiento_clasico(Esquema, cuerpo, r=None, l=None, participantes=None):
     print('=' * 80)
