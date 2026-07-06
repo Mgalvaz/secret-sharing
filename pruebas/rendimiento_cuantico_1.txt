@@ -1,0 +1,33 @@
+================================================================================
+[Test] Esquema de Cleve-Gottesman-Lo
+================================================================================
+Duración de la codificación: 0.21037530899047852
+Duración de la decodificación: 427.16951084136963
+================================================================================
+[Test] Esquema de Cleve-Gottesman-Lo: compartición anticipada
+================================================================================
+Duración de la compartición anticipada: 0.0004131793975830078
+Duración de la codificación: 0.04558730125427246
+Duración de la decodificación: 254.44105005264282
+================================================================================
+[Test] Esquema de Ogawa et al.
+================================================================================
+Duración de la codificación: 0.003591775894165039
+Duración de la decodificación: 49.38681960105896
+================================================================================
+[Test] Esquema de Ogawa et al: compartición anticipada
+================================================================================
+Duración de la compartición anticipada: 0.0004181861877441406
+Duración de la codificación: 0.008937597274780273
+Duración de la decodificación: 48.411972761154175
+================================================================================
+[Test] Esquema de Zhang-Matsumoto
+================================================================================
+Duración de la codificación: 0.0043506622314453125
+Duración de la decodificación: 48.9127357006073
+================================================================================
+[Test] Esquema de Zhang-Matsumoto: compartición anticipada
+================================================================================
+Duración de la compartición anticipada: 0.00038361549377441406
+Duración de la codificación: 0.019535541534423828
+Duración de la decodificación: 45.400511503219604

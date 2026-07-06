@@ -1,0 +1,33 @@
+================================================================================
+[Test] Esquema de Cleve-Gottesman-Lo
+================================================================================
+Duración de la codificación: 0.6654777526855469
+Duración de la decodificación: 55.38328194618225
+================================================================================
+[Test] Esquema de Cleve-Gottesman-Lo: compartición anticipada
+================================================================================
+Duración de la compartición anticipada: 0.0005970001220703125
+Duración de la codificación: 1.0636403560638428
+Duración de la decodificación: 37.18654274940491
+================================================================================
+[Test] Esquema de Ogawa et al.
+================================================================================
+Duración de la codificación: 0.0011751651763916016
+Duración de la decodificación: 871.0593502521515
+================================================================================
+[Test] Esquema de Ogawa et al: compartición anticipada
+================================================================================
+Duración de la compartición anticipada: 0.0004379749298095703
+Duración de la codificación: 0.23462152481079102
+Duración de la decodificación: 655.5867719650269
+================================================================================
+[Test] Esquema de Zhang-Matsumoto
+================================================================================
+Duración de la codificación: 0.002654552459716797
+Duración de la decodificación: 1093.0154929161072
+================================================================================
+[Test] Esquema de Zhang-Matsumoto: compartición anticipada
+================================================================================
+Duración de la compartición anticipada: 0.0006508827209472656
+Duración de la codificación: 0.0069408416748046875
+Duración de la decodificación: 646.9707820415497

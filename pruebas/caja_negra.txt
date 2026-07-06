@@ -1,0 +1,445 @@
+################################################################################
+                         VALIDACION DE PARÁMETROS
+################################################################################
+================================================================================
+Un único participante
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: El numero de participantes (1) debe ser mayor que 1.
+
+[TEST] Esquema de Shamir:
+ValueError: El parámetro de reconstrucción (1) debe ser mayor que 1.
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: La longitud del secreto (1) debe ser mayor que 1.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: La longitud del secreto (1) debe ser mayor que 1.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: El parámetro de reconstrucción (1) debe ser mayor que 1.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: La longitud del secreto (1) debe ser mayor que 1.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: La longitud del secreto (1) debe ser mayor que 1.
+
+================================================================================
+Participantes duplicados
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Shamir:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: Se han encontrado participantes duplicados.
+
+================================================================================
+Cuerpo demasiado pequeño
+================================================================================
+Esquemas de Shamir y Shamir en rampa (q = 4, n = 4)
+[TEST] Esquema de Shamir:
+ValueError: El numero de participantes (4) debe ser menor que el orden del cuerpo de trabajo (4).
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: El numero de participantes (4) debe ser menor que el orden del cuerpo de trabajo (4).
+
+Esquema de McEliece-Sarwate (q = 7, n = 6, l = 2)
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: El numero de participantes (6) debe ser menor o igual que el orden del cuerpo de trabajo menos la longitud del secreto (5).
+
+Esquema de Cleve-Gottesman-Lo (q = 4, m = 2r-1 = 5)
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: El numero de participantes totales (5) debe ser menor que el orden del cuerpo de trabajo (4).
+
+Esquema de Ogawa et al. (q = 4, m = 2r-l = 4)
+[TEST] Esquema de Ogawa et al.:
+ValueError: El numero de participantes totales (4) debe ser menor que el orden del cuerpo de trabajo (4).
+
+Esquema de Zhang-Matsumoto (q = 4, m = 2r-l = 4, l = 2)
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: El numero de participantes totales (4) debe ser menor que el orden del cuerpo de trabajo menos la longitud del secreto (2).
+
+================================================================================
+Insuficientes participantes (n = 2, r = 3)
+================================================================================
+[TEST] Esquema de Shamir:
+ValueError: El parámetro de reconstrucción (3) debe ser menor o igual que el número de participantes (2).
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: El parámetro de reconstrucción (3) debe ser menor o igual que el número de participantes (2).
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: El parámetro de reconstrucción (3) debe ser menor o igual que el número de participantes (2).
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: El parámetro de reconstrucción (3) debe ser menor o igual que el número de participantes (2).
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: El parámetro de reconstrucción (3) debe ser menor o igual que el número de participantes (2).
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: El parámetro de reconstrucción (3) debe ser menor o igual que el número de participantes (2).
+
+================================================================================
+Longitud del secreto muy grande (r = 4, l = 4)
+================================================================================
+[TEST] Esquema de Shamir en rampa:
+ValueError: La longitud del secreto (4) debe ser menor que el parámetro de reconstrucción (4).
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: La longitud del secreto (4) debe ser menor que el parámetro de reconstrucción (4).
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: La longitud del secreto (4) debe ser menor que el parámetro de reconstrucción (4).
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: La longitud del secreto (4) debe ser menor que el parámetro de reconstrucción (4).
+
+================================================================================
+Más participantes que los permitidos (n = 7, m = 2r-1 = 5 o 2r-l = 4)
+================================================================================
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: El numero de participantes (7) debe ser menor o igual a 2*r-1 (5).
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: El numero de participantes (7) debe ser menor o igual a 2*r-l (4).
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: El numero de participantes (7) debe ser menor o igual a 2*r-l (4).
+
+================================================================================
+Elemento base del cuerpo no es 2 en esquemas cuánticos
+================================================================================
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: El cuerpo introducido debe tener como elemento base el 2.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: El cuerpo introducido debe tener como elemento base el 2.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: El cuerpo introducido debe tener como elemento base el 2.
+
+################################################################################
+                         VALIDACIÓN DEL SECRETO
+################################################################################
+================================================================================
+Secreto clásico demasiado grande (q = 3^40)
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo (12157665459056928801).
+
+[TEST] Esquema de Shamir:
+ValueError: El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo (12157665459056928801).
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: El secreto proporcionado nº2  debe ser menor que el orden del cuerpo de trabajo (12157665459056928801).
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: El secreto proporcionado nº2  debe ser menor que el orden del cuerpo de trabajo (12157665459056928801).
+
+================================================================================
+Secreto clásico de longitud incorrecta (l = 3)
+================================================================================
+[TEST] Esquema de Shamir en rampa:
+ValueError: Se esperaba un secreto de longitud 3, pero se ha recibido uno de longitud 4.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: Se esperaba un secreto de longitud 3, pero se ha recibido uno de longitud 4.
+
+================================================================================
+Secreto cuántico de dimensión incorrecta (q = 2^3)
+================================================================================
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: Se esperaba un vector de estado de dimensión 8, pero se ha recibido uno de dimensión 7.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: Se esperaba un vector de estado de dimensión 64, pero se ha recibido uno de dimensión 7.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: Se esperaba un vector de estado de dimensión 64, pero se ha recibido uno de dimensión 7.
+
+================================================================================
+Secreto cuántico no unitario
+================================================================================
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: No se ha introducido un estado cuántico válido.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: No se ha introducido un estado cuántico válido.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: No se ha introducido un estado cuántico válido.
+
+################################################################################
+                         VALIDACIÓN DE PARTICIPACIONES
+################################################################################
+================================================================================
+Entregar participantes duplicados
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Shamir:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: Se han encontrado participantes duplicados.
+
+================================================================================
+Entregar participantes inexistentes
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de Shamir:
+Polinomio de la codificacion: x^2
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: El participante 'i' no está registrado o ha entregado un qudit incorrecto.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: El participante 'i' no está registrado o ha entregado un qudit incorrecto.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: El participante 'i' no está registrado o ha entregado un qudit incorrecto.
+
+================================================================================
+Número insuficiente de participantes (r = 4)
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: No se han proporcionado suficientes participaciones para recuperar el secreto.
+
+[TEST] Esquema de Shamir:
+ValueError: No se han proporcionado suficientes participaciones para recuperar el secreto.
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: No se han proporcionado suficientes participaciones para recuperar el secreto.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: No se han proporcionado suficientes participaciones para recuperar el secreto.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: No se han proporcionado suficientes participaciones para recuperar el secreto.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: No se han proporcionado suficientes participaciones para recuperar el secreto.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: No se han proporcionado suficientes participaciones para recuperar el secreto.
+
+################################################################################
+                    VALIDACIÓN DE PARTICIPACIONES ANTICIPADAS
+################################################################################
+================================================================================
+Entregar participantes duplicados
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Shamir:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: Se han encontrado participantes duplicados.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: Se han encontrado participantes duplicados.
+
+================================================================================
+Entregar participantes inexistentes
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema Simplificado:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de Shamir:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: El participante 'i' no está registrado.
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: El participante 'i' no está registrado.
+
+================================================================================
+Pedir más participaciones anticipadas de las esperadas
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: El numero de participaciones anticipadas (4) debe ser menor o igual que el parámetro de privacidad (3).
+
+[TEST] Esquema de Shamir:
+ValueError: El numero de participaciones anticipadas (4) debe ser menor o igual que el parámetro de privacidad (3).
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: El numero de participaciones anticipadas (4) debe ser menor o igual que el parámetro de privacidad (2).
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: El numero de participaciones anticipadas (4) debe ser menor o igual que el parámetro de privacidad (2).
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+ValueError: El numero de participaciones anticipadas (4) debe ser menor o igual que el parámetro de privacidad (3).
+
+[TEST] Esquema de Ogawa et al.:
+ValueError: El numero de participaciones anticipadas (4) debe ser menor o igual que el parámetro de privacidad (2).
+
+[TEST] Esquema de Zhang-Matsumoto:
+ValueError: El numero de participaciones anticipadas (4) debe ser menor o igual que el parámetro de privacidad (2).
+
+================================================================================
+Pedir participaciones para participantes a los que ya se 
+ha entregado participaciones anticipadas
+================================================================================
+[TEST] Esquema Simplificado:
+ValueError: El participante 'a' ya ha recibido una participación anticipada.
+
+[TEST] Esquema de Shamir:
+ValueError: El participante 'a' ya ha recibido una participación anticipada.
+
+[TEST] Esquema de Shamir en rampa:
+ValueError: El participante 'a' ya ha recibido una participación anticipada.
+
+[TEST] Esquema de McEliece-Sarwate:
+ValueError: El participante 'a' ya ha recibido una participación anticipada.
+
+################################################################################
+                           VERIFICACIÓN DE ORDEN
+################################################################################
+================================================================================
+Pedir decodificar un secreto sin haberlo codificado anteriormente
+================================================================================
+[TEST] Esquema de Cleve-Gottesman-Lo:
+AttributeError: Todavía no se ha realizado el procedimiento de codificación.
+
+[TEST] Esquema de Ogawa et al.:
+AttributeError: Todavía no se ha realizado el procedimiento de codificación.
+
+[TEST] Esquema de Zhang-Matsumoto:
+AttributeError: Todavía no se ha realizado el procedimiento de codificación.
+
+================================================================================
+Pedir compartición anticipada tras haber codificado ya el secreto
+================================================================================
+[TEST] Esquema Simplificado:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Shamir:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Shamir en rampa:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de McEliece-Sarwate:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Ogawa et al.:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Zhang-Matsumoto:
+AttributeError: Ya se han repartido todas las participaciones.
+
+================================================================================
+Pedir codificar un secreto si ya se ha realizado
+================================================================================
+[TEST] Esquema Simplificado:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Shamir:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Shamir en rampa:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de McEliece-Sarwate:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Cleve-Gottesman-Lo:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Ogawa et al.:
+AttributeError: Ya se han repartido todas las participaciones.
+
+[TEST] Esquema de Zhang-Matsumoto:
+AttributeError: Ya se han repartido todas las participaciones.
+
+================================================================================
+Pedir compartición anticipada si ya se ha realizado
+================================================================================
+[TEST] Esquema de Cleve-Gottesman-Lo:
+AttributeError: Ya se han repartido las participaciones anticipadas.
+
+[TEST] Esquema de Ogawa et al.:
+AttributeError: Ya se han repartido las participaciones anticipadas.
+
+[TEST] Esquema de Zhang-Matsumoto:
+AttributeError: Ya se han repartido las participaciones anticipadas.
+
+================================================================================
+Pedir decodificar si ya se ha realizado
+================================================================================
+[TEST] Esquema de Cleve-Gottesman-Lo:
+AttributeError: Ya se ha realizado el procedimiento de decodificación.
+
+[TEST] Esquema de Ogawa et al.:
+AttributeError: Ya se ha realizado el procedimiento de decodificación.
+
+[TEST] Esquema de Zhang-Matsumoto:
+AttributeError: Ya se ha realizado el procedimiento de decodificación.
+
