@@ -1,15 +1,16 @@
-from esquemas_clasicos import Shamir, Simplificado, ShamirRampa, McElieceSarwate
+from classic_schemes import Shamir, Simplificado, ShamirRampa, McElieceSarwate
 from galois import GF
 
-from utils import pedir_entero
+from utils import ask_int
 
 def programa_clasico():
     cuerpo = GF(2, 64)
 
     # Pedir los participantes y los datos del esquema
     participantes = []
-    n = pedir_entero('Escriba el número de particiantes: ',
-                       f'El número de participantes debe ser al menos 2 y menor que el orden del cuerpo de trabajo ({cuerpo.characteristic}^{cuerpo.degree})', lambda x: 2 <= x < cuerpo.order)
+    n = ask_int('Escriba el número de particiantes: ',
+                f'El número de participantes debe ser al menos 2 y menor que el orden del cuerpo de trabajo ({cuerpo.characteristic}^{cuerpo.degree})',
+                lambda x: 2 <= x < cuerpo.order)
     for i in range(1, n+1):
         participante = input(f'Escriba el nombre del participante nº{i}: ')
         while participante in participantes:
@@ -17,11 +18,13 @@ def programa_clasico():
         participantes.append(participante)
     print() # Imprimir espacio en blanco para mejor claridad visual
 
-    r = pedir_entero('Escriba número de participantes necesarios para recuperar el secreto: ',
-                       f'El número de participantes necesarios para recuperar el secreto debe ser al menos 2 y menor o igual que el número de participantes ({n})', lambda x: 2 <= x <= n )
+    r = ask_int('Escriba número de participantes necesarios para recuperar el secreto: ',
+                f'El número de participantes necesarios para recuperar el secreto debe ser al menos 2 y menor o igual que el número de participantes ({n})',
+                lambda x: 2 <= x <= n)
 
-    l = pedir_entero('Escriba el número de secretos que se desea compartir: ',
-                       f'El número de secretos debe ser al menos 1 y menor que el parámetro de reconstrucción ({r}).', lambda x: 1 <= x < r)
+    l = ask_int('Escriba el número de secretos que se desea compartir: ',
+                f'El número de secretos debe ser al menos 1 y menor que el parámetro de reconstrucción ({r}).',
+                lambda x: 1 <= x < r)
 
     # Preguntar por el esquema que se desea usar
     if l == 1:
@@ -35,8 +38,7 @@ def programa_clasico():
             ss = Shamir(cuerpo, r, participantes)
     else:
         print('¿Cual de los dos siguientes esquemas desea realizar?\n1.- Esquema de Shamir en rampa.\n2.- Esquema de McEliece-Sarwate.')
-        esq = pedir_entero('Respuesta: ',
-                     f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
+        esq = ask_int('Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if esq == 1:
             ss = ShamirRampa(cuerpo, r, l, participantes)
         else:
@@ -50,8 +52,9 @@ def programa_clasico():
     # Preguntar por participaciones anticipadas
     yn = input('¿Desea repartir participaciones anticipadas? (y/n): ')
     if yn.lower() in ('si', 's', 'y', 'yes'):
-        n_anticipados = pedir_entero(f'Introduzca el número de participaciones anticipadas (1 - {r-l}): ',
-                     f'El número de participaciones anticipadas debe ser al menos 1 y menor que el parámetro de privacidad {r-l}', lambda x: 1 <= x <= r-l)
+        n_anticipados = ask_int(f'Introduzca el número de participaciones anticipadas (1 - {r - l}): ',
+                                f'El número de participaciones anticipadas debe ser al menos 1 y menor que el parámetro de privacidad {r - l}',
+                                lambda x: 1 <= x <= r - l)
         participantes_anticipados = []
         # Añadir participantes anticipados
         for i in range(1, n_anticipados+1):

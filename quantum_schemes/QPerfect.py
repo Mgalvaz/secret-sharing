@@ -4,7 +4,7 @@ from qiskit.quantum_info import partial_trace
 from qiskit.circuit.library import LinearFunction
 from qiskit_aer import StatevectorSimulator
 
-from utils import extender_matriz
+from utils import extend_matrix
 
 
 sim = StatevectorSimulator()
@@ -117,7 +117,7 @@ class CGL:
             # Evaluar en cada registro los polinomios en los elementos de los participantes
             vandermonde = self.cuerpo(x)[:, None] ** np.arange(r)
             matriz = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-1), np.zeros((r, r-1))])])) # Matriz de evaluación
-            matriz = extender_matriz(matriz) # Extender la matriz de numeros de F_q a vectores de F_2
+            matriz = extend_matrix(matriz)  # Extender la matriz de numeros de F_q a vectores de F_2
             orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]  # Como qiskit es Little Endian, pero la matriz extendida está en Big Endian, hay que invertir el orden de los qubits de los participantes
         # Compartición anticipada
         else:
@@ -129,7 +129,7 @@ class CGL:
             part_resto = [self.__participaciones[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
             matriz_p1 = np.linalg.inv(elem_anticipados[:, None] ** np.arange(r))
             matriz_p2 = self.cuerpo(elem_resto)[:, None] ** np.arange(r)
-            matriz = extender_matriz(matriz_p2 @ matriz_p1)
+            matriz = extend_matrix(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
         self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
@@ -165,7 +165,7 @@ class CGL:
         orden_participantes = [qubit for participacion in participaciones[:r] for qubit in reversed(participacion)]
         matriz_p1 = np.linalg.inv(elementos[:,None]**np.arange(r)) # Matriz del primer paso del procediemiento de decodificacion
         matriz_p2 = elementos_resto[:,None]**np.arange(r) # Matriz del segundo paso del procediemiento de decodificacion
-        matriz = extender_matriz(matriz_p2@matriz_p1)
+        matriz = extend_matrix(matriz_p2 @ matriz_p1)
         qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
         sv = sim.run(transpile(qc, backend=sim)).result().get_statevector()
         elementos_traza = list(range((int(elementos[0])-1)*self.cuerpo.degree)) + list(range(int(elementos[0])*self.cuerpo.degree, (2*r-1)*self.cuerpo.degree))  # Posicion de los qubits a trazar

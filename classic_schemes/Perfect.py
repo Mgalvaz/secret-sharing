@@ -1,7 +1,7 @@
 import numpy as np
 from galois import Poly, lagrange_poly
 
-from utils import array_aleatorio, polinomio_aleatorio, bytes_a_int, int_a_bytes, int_a_b64str, b64str_a_int
+from utils import random_array, random_polinomial, bytes_to_int, int_to_bytes, int_to_b64str, b64str_to_int
 
 class Shamir:
     r"""
@@ -59,8 +59,8 @@ class Shamir:
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1}).')
 
         # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
-        aleatoriedad = array_aleatorio(self.cuerpo.order, len(participantes_anticipados))
-        aleatoriedad_b64 = int_a_b64str(aleatoriedad, self.longitud_bytes)
+        aleatoriedad = random_array(self.cuerpo.order, len(participantes_anticipados))
+        aleatoriedad_b64 = int_to_b64str(aleatoriedad, self.longitud_bytes)
         extras = list(zip(participantes_anticipados, aleatoriedad_b64))
         self.__participaciones_anticipadas.extend(extras)
         return extras
@@ -75,31 +75,32 @@ class Shamir:
         """
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
-        secreto_i = bytes_a_int(secreto)
+        secreto_i = bytes_to_int(secreto)
         if secreto_i >= self.cuerpo.order:
             raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
         # Procedimiento estandar
         if len(self.__participaciones_anticipadas) == 0:
-            polinomio = Poly(array_aleatorio(self.cuerpo.order, self.reconstruccion - 1) + [secreto_i], field=self.cuerpo)
+            polinomio = Poly(random_array(self.cuerpo.order, self.reconstruccion - 1) + [secreto_i], field=self.cuerpo)
             x = np.arange(1, len(self.participantes_nombre))
         # Compartición anticipada
         else:
             # Obtener el elemento asociado a cada participante y decodificar su participación
             nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
             puntos_anticipados = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres) + [0])
-            valores_anticipados = self.cuerpo(b64str_a_int(valores_b64) + [secreto_i])
+            valores_anticipados = self.cuerpo(b64str_to_int(valores_b64) + [secreto_i])
             x = np.setdiff1d(np.arange(1, len(self.participantes_nombre)), puntos_anticipados)
 
             # Se determina un polinomio de grado r-1 compatible con las participaciones anticipadas
             lagrange = lagrange_poly(puntos_anticipados, valores_anticipados)
             if len(puntos_anticipados) < self.reconstruccion - 1: # Si el número de participaciones anticipadas es menor que r-1, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * polinomio_aleatorio(self.cuerpo, self.reconstruccion - len(puntos_anticipados) - 2)
+                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * random_polinomial(
+                    self.cuerpo, self.reconstruccion - len(puntos_anticipados) - 2)
             else: # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
 
         # Generar el resto de las participaciones
-        participaciones_b64 = int_a_b64str(polinomio(x), self.longitud_bytes)
+        participaciones_b64 = int_to_b64str(polinomio(x), self.longitud_bytes)
         self.__participaciones_anticipadas = None  # Se eliminan las participaciones anticipadas almacenadas para mayor seguridad
         return list(zip(self.participantes_nombre[x], participaciones_b64))
 
@@ -119,10 +120,10 @@ class Shamir:
 
         # Obtener el elemento asociado a cada participante y decodificar su participación
         puntos = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres))
-        valores = self.cuerpo(b64str_a_int(valores_b64))
+        valores = self.cuerpo(b64str_to_int(valores_b64))
         # Reconstruir el polinomio generador y el secreto como su coeficiente independiente
         polinomio = lagrange_poly(puntos, valores)
-        return int_a_bytes(polinomio.coefficients(order="asc")[0])
+        return int_to_bytes(polinomio.coefficients(order="asc")[0])
 
     def decodificacion(self, participaciones):
         """
@@ -141,7 +142,7 @@ class Shamir:
 
         # Obtener el elemento asociado a cada participante y decodificar su participación
         puntos = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres))
-        valores = self.cuerpo(b64str_a_int(valores_b64))
+        valores = self.cuerpo(b64str_to_int(valores_b64))
         # Calcular el valor del polinomio generador en 0 sin reconstruirlo
         mascara = ~np.eye(r, dtype=bool) # Máscara de los elementos x_h de la fórmula
         puntos_matriz = np.broadcast_to(puntos, (r, r)) # Matriz en la que cada fila es el array puntos
@@ -149,7 +150,7 @@ class Shamir:
         numerador = np.prod(puntos_matriz, axis=0)  # producto del numerador
         denominador = np.prod(puntos_matriz - puntos, axis=0) # producto del denominador
         coef = numerador / denominador # Cálculo de l_i
-        return int_a_bytes(np.sum(valores * coef)) # Se devuelve la suma y_i * l_i
+        return int_to_bytes(np.sum(valores * coef))  # Se devuelve la suma y_i * l_i
 
     def _verificar_nombres(self, nombres):
         """
@@ -215,8 +216,8 @@ class Simplificado:
             raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({len(self.participantes) - 1}).')
 
         # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
-        aleatoriedad = array_aleatorio(self.cuerpo.order, len(participantes_anticipados))
-        aleatoriedad_b64 = int_a_b64str(aleatoriedad, self.longitud_bytes)
+        aleatoriedad = random_array(self.cuerpo.order, len(participantes_anticipados))
+        aleatoriedad_b64 = int_to_b64str(aleatoriedad, self.longitud_bytes)
         extras = list(zip(participantes_anticipados, aleatoriedad_b64))
         self.__participaciones_anticipadas.extend(extras)
         return extras
@@ -231,7 +232,7 @@ class Simplificado:
         """
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
-        secreto_i = bytes_a_int(secreto)
+        secreto_i = bytes_to_int(secreto)
         if secreto_i >= self.cuerpo.order:
             raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
@@ -244,14 +245,14 @@ class Simplificado:
         else:
             # Obtener el elemento asociado a cada participante y decodificar su participación
             nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
-            valores = self.cuerpo(b64str_a_int(valores_b64))
+            valores = self.cuerpo(b64str_to_int(valores_b64))
             x = np.setdiff1d(self.participantes, nombres).tolist()
             suma = valores.sum()
 
         # Se generan el resto de participaciones
-        participaciones = self.cuerpo(array_aleatorio(self.cuerpo.order, len(x) - 1))
+        participaciones = self.cuerpo(random_array(self.cuerpo.order, len(x) - 1))
         participaciones = np.append(participaciones, self.cuerpo(secreto_i) - participaciones.sum() - suma) # La última debe ser igual al secreto menos la suma de todas las anteriores
-        participaciones_b64 = int_a_b64str(participaciones, self.longitud_bytes)
+        participaciones_b64 = int_to_b64str(participaciones, self.longitud_bytes)
         self.__participaciones_anticipadas = None  # Se eliminan las participaciones anticipadas almacenadas para mayor seguridad
         return list(zip(x, participaciones_b64))
 
@@ -269,9 +270,9 @@ class Simplificado:
         self._verificar_nombres(nombres)
 
         # Obtener las participaciones
-        valores = self.cuerpo(b64str_a_int(valores_b64))
+        valores = self.cuerpo(b64str_to_int(valores_b64))
         # El secreto es la suma de todas las participaciones
-        return int_a_bytes(valores.sum())
+        return int_to_bytes(valores.sum())
 
     def _verificar_nombres(self, nombres):
         """

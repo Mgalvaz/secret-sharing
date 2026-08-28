@@ -3,18 +3,18 @@ import numpy as np
 from base64 import b64decode, b64encode
 from galois import Poly
 
-def bytes_a_int(cadena):
+def bytes_to_int(string):
     """
     Obtiene la representacion en entero de unos bytes.
     Si se proporciona una secuencia de bytes, devuelve una lista de las representaciones de cada cadena.
-    :param cadena: La cadena de caracteres cuya representacion en enetros se quiere obtener.
+    :param string: La cadena de caracteres cuya representacion en enetros se quiere obtener.
     :return: El numero entero que representa a la cadena proporcionada.
     """
-    if isinstance(cadena, bytes):
-        return int.from_bytes(cadena, byteorder='big')
-    return list(int.from_bytes(b, byteorder='big') for b in cadena)
+    if isinstance(string, bytes):
+        return int.from_bytes(string, byteorder='big')
+    return list(int.from_bytes(b, byteorder='big') for b in string)
 
-def int_a_bytes(numero):
+def int_to_bytes(numero):
     """
     Obtiene la representacion en bytes de un entero.
     Si se proporciona una secuancia de enteros, devuelve una lista de las representaciones de cada número.
@@ -41,7 +41,7 @@ def int_a_bytes(numero):
         representacion_str.append(n_int.to_bytes(longitud, byteorder='big'))
     return representacion_str
 
-def int_a_b64str(lista_int, longitud):
+def int_to_b64str(lista_int, longitud):
     """
     Obtiene la codificación en base64 de cada número de un array de enteros.
     :param lista_int: El array de enteros.
@@ -53,7 +53,7 @@ def int_a_b64str(lista_int, longitud):
         return list(b64encode(numero.to_bytes(longitud, byteorder='big')).decode() for numero in lista_int.tolist())
     return list(b64encode(numero.to_bytes(longitud, byteorder='big')).decode() for numero in lista_int)
 
-def b64str_a_int(lista_b64):
+def b64str_to_int(lista_b64):
     """
     Obtiene la decodificación en base64 de cada string de una lista.
     :param lista_b64: La lista de strings codificados.
@@ -61,7 +61,7 @@ def b64str_a_int(lista_b64):
     """
     return list(int.from_bytes(b64decode(str_b64), byteorder='big') for str_b64 in lista_b64)
 
-def array_aleatorio(sup, n):
+def random_array(sup, n):
     """
     Devuelve un array de longitud n con números aleatorios criptograficamente seguros en el rango [0, sup).
     :param sup: Cota superior (no incluida) para los números aleatorios.
@@ -70,7 +70,7 @@ def array_aleatorio(sup, n):
     """
     return [secrets.randbelow(sup) for _ in range(n)]
 
-def polinomio_aleatorio(cuerpo, grado):
+def random_polinomial(cuerpo, grado):
     """
     Construye un polinomio aleatorio criptográficamente seguro sobre un cuerpo.
     :param cuerpo: Cuerpo sobre el que se construye el polinomio.
@@ -79,7 +79,7 @@ def polinomio_aleatorio(cuerpo, grado):
     """
     return Poly([secrets.randbelow(cuerpo.order) for _ in range(grado+1)], field=cuerpo)
 
-def extender_matriz(matriz):
+def extend_matrix(matriz):
     """
     Obtiene la extensión de la matriz proporcionada formada por la representación matricial de cada uno de sus elementos en el cuerpo base y se convierte a formato booleano.
     :param matriz: Matriz sobre el cuerpo GF(2, m) a extender.
@@ -96,7 +96,7 @@ def extender_matriz(matriz):
     matriz_gf2 = np.transpose(matriz_gf2, (0, 2, 1)).reshape(shape_final) # Alineación de dimensiones
     return matriz_gf2.view(np.ndarray).astype(bool) # Se devuelve la matriz extendida en formato booleano
 
-def pedir_entero(pregunta, mensaje_error, condicion):
+def ask_int(pregunta, mensaje_error, condicion):
     """
     Pide por consola un número entero y valida su valor.
     :param pregunta: Mensaje que se muestra por pantalla para pedir el número.

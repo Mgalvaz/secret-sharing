@@ -1,10 +1,10 @@
-from esquemas_cuanticos import CGL, Ogawa, ZhangMatsumoto
+from quantum_schemes import CGL, Ogawa, ZhangMatsumoto
 from galois import GF
 from qiskit.quantum_info import Statevector
 from numpy.linalg import norm
 import ast
 
-from utils import pedir_entero
+from utils import ask_int
 
 def pedir_secreto(dimension, n=-1):
     while True:
@@ -22,7 +22,7 @@ def pedir_secreto(dimension, n=-1):
                 f'Se esperaba que el secreto tuviera dimensión {dimension}, pero se ha recibido {len(secreto)}, introduzca otro.')
         elif not secreto.is_valid():
             print('El secreto obtenido no es válido, ¿quiere introducir otro o normalizarlo?\n1.- Introducir otro.\n2.- Normalizar.')
-            op = pedir_entero(f'Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
+            op = ask_int(f'Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
             if op == 2:
                 norma = norm(secreto)
                 if norma == 0:
@@ -37,15 +37,17 @@ def programa_cuantico():
     # Pedir datos del esquema
     cuerpo =  GF(2, 3)
 
-    l = pedir_entero('Escriba el número de secretos que se desea compartir: ',
-                     f'El número de secretos debe ser al menos 1.', lambda x: 1 <= x)
+    l = ask_int('Escriba el número de secretos que se desea compartir: ', f'El número de secretos debe ser al menos 1.',
+                lambda x: 1 <= x)
 
-    r = pedir_entero('Escriba número de participantes necesarios para recuperar el secreto: ',
-                     f'El número de participantes necesarios para recuperar el secreto debe ser mayor que la longitud del secreto y menor que el orden del cuerpo de trabajo menos la longitud del secreto entre 2 ({(cuerpo.order + l + 1) // 2})', lambda x: l < x < (cuerpo.order + l + 1) // 2)
+    r = ask_int('Escriba número de participantes necesarios para recuperar el secreto: ',
+                f'El número de participantes necesarios para recuperar el secreto debe ser mayor que la longitud del secreto y menor que el orden del cuerpo de trabajo menos la longitud del secreto entre 2 ({(cuerpo.order + l + 1) // 2})',
+                lambda x: l < x < (cuerpo.order + l + 1) // 2)
 
     # Pedir participantes
-    n = pedir_entero('Escriba el número de particiantes: ',
-                     f'El número de participantes debe ser como mínimo el parámetro de recostrucción ({r}) y no puede superar ({2 * r - l}).', lambda x: r <= x <= 2 * r - l)
+    n = ask_int('Escriba el número de particiantes: ',
+                f'El número de participantes debe ser como mínimo el parámetro de recostrucción ({r}) y no puede superar ({2 * r - l}).',
+                lambda x: r <= x <= 2 * r - l)
     participantes = []
     for i in range(1, n+1):
         participante = input(f'Escriba el nombre del participante nº{i}: ')
@@ -58,7 +60,7 @@ def programa_cuantico():
         ss = CGL(cuerpo, r, participantes)
     else:
         print('¿Cual de los dos siguientes esquemas desea realizar?\n1.- Esquema de Ogawa et al.\n2.- Esquema de Zhang-Matsumoto.')
-        esq = pedir_entero('Respuesta: ',f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
+        esq = ask_int('Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if esq == 1:
             ss = Ogawa(cuerpo, r, l, participantes)
         else:
@@ -73,8 +75,9 @@ def programa_cuantico():
     yn = input('¿Desea repartir participaciones anticipadas? (y/n): ')
     diccionario_participaciones = {}
     if yn.lower() in ('si', 's', 'y', 'yes'):
-        n_anticipados = pedir_entero(f'Introduzca el número de participaciones anticipadas (1 - {r-l}): ',
-                     f'El número de participaciones anticipadas debe ser al menos 1 y menor que el parámetro de privacidad {r-l}', lambda x: 1 <= x <= r-l)
+        n_anticipados = ask_int(f'Introduzca el número de participaciones anticipadas (1 - {r - l}): ',
+                                f'El número de participaciones anticipadas debe ser al menos 1 y menor que el parámetro de privacidad {r - l}',
+                                lambda x: 1 <= x <= r - l)
         participantes_anticipados = []
         # Añadir participantes anticipados
         for i in range(1, n_anticipados+1):
@@ -100,7 +103,7 @@ def programa_cuantico():
         secreto = pedir_secreto(cuerpo.order)
     else:
         print('¿Desea introducir el vector de estado compuesto o cada uno de los subsistemas?\n1.- Vector de estado global.\n2.- Separar por subsistemas.')
-        elec = pedir_entero(f'Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
+        elec = ask_int(f'Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if elec == 1:
             secreto = pedir_secreto(cuerpo.order**l)
         else:

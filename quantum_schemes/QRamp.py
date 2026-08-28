@@ -4,7 +4,7 @@ from qiskit.quantum_info import partial_trace
 from qiskit.circuit.library import LinearFunction
 from qiskit_aer import StatevectorSimulator
 
-from utils import extender_matriz
+from utils import extend_matrix
 
 
 sim = StatevectorSimulator()
@@ -123,7 +123,7 @@ class Ogawa:
             # Evaluar en cada registro los polinomios en los elementos de los participantes
             vandermonde = self.cuerpo(x)[:, None] ** np.arange(r)
             matriz = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-l), np.zeros((r, r-l))])]))
-            matriz = extender_matriz(matriz)
+            matriz = extend_matrix(matriz)
             orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]
         # Compartición anticipada
         else:
@@ -135,7 +135,7 @@ class Ogawa:
             vandermonde = self.cuerpo(elem_anticipados)[:, None] ** np.arange(r)
             matriz_p1 = np.linalg.inv(self.cuerpo(np.vstack([vandermonde, np.column_stack([np.eye(l), np.zeros((l, r-l))])])))
             matriz_p2 = self.cuerpo(elem_resto)[:, None] ** np.arange(r)
-            matriz = extender_matriz(matriz_p2 @ matriz_p1)
+            matriz = extend_matrix(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
         self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
@@ -174,7 +174,7 @@ class Ogawa:
         matriz_p1 = np.linalg.inv(self.cuerpo(elementos_ordenados)[:, None] ** np.arange(r)) # Matriz del primer paso del procedimiento de decodificacion
         vandermonde = self.cuerpo(elementos_resto)[:,None]**np.arange(r)
         matriz_p2 = self.cuerpo(np.vstack([np.column_stack([np.eye(l), np.zeros((l, r-l))]), vandermonde])) # Matriz del segundo paso del procedimiento de decodificacion
-        matriz = extender_matriz(matriz_p2@matriz_p1)
+        matriz = extend_matrix(matriz_p2 @ matriz_p1)
         qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
         sv = sim.run(transpile(qc, backend=sim)).result().get_statevector()
         elementos_traza = np.setdiff1d(range((2*r-l)*self.cuerpo.degree), np.concatenate([range((i-1)*self.cuerpo.degree, i*self.cuerpo.degree) for i in elementos_ordenados[:l]])) # Posicion de los qubits a trazar
@@ -295,10 +295,10 @@ class ZhangMatsumoto:
                 qc.h(participacion)
             matriz_1 = np.linalg.inv(self.cuerpo.Range(0,r)[:, None] ** np.arange(r)) # Obtener todos los polinomios que en A valen el secreto
             participantes_polinomio = [qubit for participacion in self.__participaciones[:r] for qubit in reversed(participacion)]
-            qc.append(LinearFunction(extender_matriz(matriz_1)), participantes_polinomio)  # Aplicar matriz que obtiene E_r(A,s)
+            qc.append(LinearFunction(extend_matrix(matriz_1)), participantes_polinomio)  # Aplicar matriz que obtiene E_r(A,s)
             vandermonde = self.cuerpo(x)[:, None] ** np.arange(r) # Evaluar en cada registro los polinomios en los elementos de los participantes
             matriz_2 = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-l), np.zeros((r, r-l))])])) # Matriz de evaluación
-            matriz = extender_matriz(matriz_2)
+            matriz = extend_matrix(matriz_2)
             orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]
         # Compartición anticipada
         else:
@@ -309,7 +309,7 @@ class ZhangMatsumoto:
             part_resto = [self.__participaciones[idx - l] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
             matriz_p1 = np.linalg.inv(self.cuerpo(np.concat([elem_anticipados, np.arange(l)]))[:, None] ** np.arange(r))
             matriz_p2 = self.cuerpo(elem_resto)[:, None] ** np.arange(r)
-            matriz = extender_matriz(matriz_p2 @ matriz_p1)
+            matriz = extend_matrix(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
         self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
@@ -347,7 +347,7 @@ class ZhangMatsumoto:
         orden_participantes = [qubit for participacion in participaciones_ordenadas for qubit in reversed(participacion)]
         matriz_p1 = np.linalg.inv(self.cuerpo(elementos_ordenados)[:,None]**np.arange(r)) # Matriz del primer paso del procedimiento de decodificacion
         matriz_p2 = elementos_resto[:,None]**np.arange(r) # Matriz del segundo paso del procedimiento de decodificacion
-        matriz = extender_matriz(matriz_p2@matriz_p1)
+        matriz = extend_matrix(matriz_p2 @ matriz_p1)
         qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
         sv = sim.run(transpile(qc, backend=sim)).result().get_statevector()
         elementos_traza = np.setdiff1d(range((2 * r - l) * self.cuerpo.degree), np.concatenate([range((i-l) * self.cuerpo.degree, (i-l+1) * self.cuerpo.degree) for i in elementos_ordenados[:l]]))  # Posicion de los qubits a trazar

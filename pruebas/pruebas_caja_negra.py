@@ -1,5 +1,5 @@
-from esquemas_clasicos import Simplificado, Shamir, ShamirRampa, McElieceSarwate
-from esquemas_cuanticos import CGL, Ogawa, ZhangMatsumoto
+from classic_schemes import Simplificado, Shamir, ShamirRampa, McElieceSarwate
+from quantum_schemes import CGL, Ogawa, ZhangMatsumoto
 
 from qiskit.quantum_info import Statevector
 from qiskit import QuantumRegister

@@ -46,24 +46,25 @@ Antes de nada se debe construir un objeto de la clase correspondiente.
 
 ```python
 import galois
-from esquemas_clasicos import Shamir
-esquema = Shamir(galois.GF(2,30), 3, ['Ana', 'Luis', 'Juan', 'Pedro'])
+from classic_schemes import Shamir
+
+scheme = Shamir(galois.GF(2, 30), 3, ['Alice', 'Bob', 'Charles', 'Daisy'])
 ```
 
 Si se desea realizar compartición anticipada, se debe llamar al método `comparticion_anticipada` con los participantes correspondientes.
 ```python
-anticipadas = esquema.comparticion_anticipada('Luis', 'Pedro')
+advance = scheme.comparticion_anticipada('Bob', 'Daisy')
 ```
 
 Independientemente de si se ha realizado la compartición anticipada o no, en caso de querer compartir un secreto se debe llamar al método `codificacion`.
 ```python
-participaciones = esquema.codificacion(b'672')
+shares = scheme.codificacion(b'672')
 ```
 **Nota:** En caso de haber distribuido participaciones de forma anticipada, estas **no** volverán a devolverse durante la codificación.
 
 Finalmente, cualquier conjunto de tres o más participantes puede reconstruir el secreto.
 ```python
-secreto = esquema.decodificacion([anticipadas[0], participaciones[1], participaciones[0]])
+secreto = scheme.decodificacion([advance[0], shares[1], shares[0]])
 ```
 
 ### _Script_ interactivo
@@ -78,27 +79,23 @@ python main.py
 
 ---
 
-## Estructura del proyecto
+## Project structure
 ```
 secret-sharing
-├── esquemas_clasicos
+├── classical_schemes
 │   ├── __init__.py
-│   ├── Rampa.py
-│   └── Umbral.py
-├── esquemas_cuanticos
+│   ├── Perfect.py
+│   └── Ramp.py
+├── quantum_schemes
 │   ├── __init__.py
-│   ├── QRampa.py
-│   └── QUmbral.py
+│   ├── QPerfect.py
+│   └── QRamp.py
+├── utils
+│   ├── __init__.py
+│   └── _utils.py
+├── classical_main.py
 ├── main.py
-├── main_clasico.py
-├── main_cuantico.py
-├── pruebas
-│   ├── pruebas_caja_blanca.py
-│   ├── pruebas_caja_negra.py
-│   └── pruebas_rendimiento.py
+├── quantum_main.py
 ├── README.md
-├── requirements.txt
-└── utils
-    ├── __init__.py
-    └── _utils.py
+└── requirements.txt
 ```

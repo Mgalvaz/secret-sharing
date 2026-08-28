@@ -1,12 +1,12 @@
-from esquemas_clasicos import Simplificado, Shamir, ShamirRampa, McElieceSarwate
-from esquemas_cuanticos import CGL, Ogawa, ZhangMatsumoto
+from classic_schemes import Simplificado, Shamir, ShamirRampa, McElieceSarwate
+from quantum_schemes import CGL, Ogawa, ZhangMatsumoto
 
 from qiskit import transpile
 from qiskit.quantum_info import Statevector
 from qiskit_aer import StatevectorSimulator
 from galois import GF, Poly, lagrange_poly
 
-from utils import bytes_a_int, int_a_bytes
+from utils import bytes_to_int, int_to_bytes
 
 import numpy as np
 import random
@@ -57,11 +57,11 @@ def funcionamiento_clasico(Esquema, cuerpo, r=None, l=None, participantes=None):
         esquema = Esquema(cuerpo, r, l, participantes)
         secreto = [random.randint(0, cuerpo.order-1) for _ in range(l)]
     print('Secreto =', secreto)
-    secreto = int_a_bytes(secreto)
+    secreto = int_to_bytes(secreto)
     participaciones = esquema.codificacion(secreto)
     part = random.sample(participaciones, r)
     sec = esquema.decodificacion(part)
-    print('Secreto decodificado =', bytes_a_int(sec))
+    print('Secreto decodificado =', bytes_to_int(sec))
     print()
 
 def comparticion_anticipada_clasico(Esquema, cuerpo, r=None, l=None, participantes=None, sobran=0):
@@ -84,13 +84,13 @@ def comparticion_anticipada_clasico(Esquema, cuerpo, r=None, l=None, participant
     participaciones_anticipadas = esquema.comparticion_anticipada(anticipados)
     print('Participaciones anticipadas:', participaciones_anticipadas)
     print('Secreto =', secreto)
-    secreto = int_a_bytes(secreto)
+    secreto = int_to_bytes(secreto)
     participaciones = esquema.codificacion(secreto)
     print('Resto de participaciones:', participaciones)
     part = participaciones + participaciones_anticipadas
     random.shuffle(part)
     sec = esquema.decodificacion(part)
-    print('Secreto decodificado =', bytes_a_int(sec))
+    print('Secreto decodificado =', bytes_to_int(sec))
 
 def funcionamiento_cuantico(Esquema, cuerpo, r=None, l=None, participantes=None):
     print('=' * 80)
