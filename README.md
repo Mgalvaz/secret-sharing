@@ -58,14 +58,16 @@ advance = scheme.advance_sharing('Bob')
 ```
 
 Independientemente de si se ha realizado la compartición anticipada o no, en caso de querer compartir un secreto se debe llamar al método `codificacion`.
+
 ```python
-shares = scheme.codificacion(b'672')
+shares = scheme.distribute(b'672')
 ```
 **Nota:** En caso de haber distribuido participaciones de forma anticipada, estas **no** volverán a devolverse durante la codificación.
 
 Finalmente, cualquier conjunto de tres o más participantes puede reconstruir el secreto.
+
 ```python
-secreto = scheme.decodificacion([advance[0], shares[1], shares[0]])
+secreto = scheme.reconstruct([advance[0], shares[1], shares[0]])
 ```
 
 ### _Script_ interactivo

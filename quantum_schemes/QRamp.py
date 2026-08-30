@@ -28,7 +28,7 @@ class Ogawa:
         :param l: Longitud del secreto que se quiere repartir.
         :param participantes: Lista de los identificadores únicos de cada participante del esquema.
         """
-        # Verificación de condiciones
+        # Condition checks
         if cuerpo.characteristic != 2:
             raise ValueError(f'El cuerpo introducido debe tener como elemento base el 2.')
         if 2*r-l < len(participantes):
@@ -63,7 +63,7 @@ class Ogawa:
         :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if self.__participaciones_secreto_anticipado is not None:
@@ -103,7 +103,7 @@ class Ogawa:
         :param secreto: Secreto que se quiere codificar entre todos los participantes. Puede ser una lista de vectores de estado de dimensión q o un vector de estado de dimensión q^l
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if not secreto.is_valid():
@@ -114,7 +114,7 @@ class Ogawa:
         qc = self.__circuito
         r = self.reconstruccion
         l = self.longitud_secreto
-        # Procedimiento estandar
+        # Standard procedure
         if len(self.__participaciones_anticipadas) == 0:
             x = np.arange(1, 2*r-l+1)
             qc.initialize(secreto, self.__participaciones[:l])  # Inicializar el secreto
@@ -125,7 +125,7 @@ class Ogawa:
             matriz = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-l), np.zeros((r, r-l))])]))
             matriz = extend_matrix(matriz)
             orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]
-        # Compartición anticipada
+        # Advance sharing
         else:
             qc.initialize(secreto, self.__participaciones_secreto_anticipado)
             elem_anticipados = [self.participantes_numero[participacion.name] for participacion in self.__participaciones_anticipadas]
@@ -149,7 +149,7 @@ class Ogawa:
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto hasta una fase global.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__circuito is None:
             raise AttributeError(f'Ya se ha realizado el procedimiento de decodificación.')
         if self.__participaciones_anticipadas is not None:
@@ -201,7 +201,7 @@ class ZhangMatsumoto:
         :param l: Longitud del secreto que se quiere repartir.
         :param participantes: Lista de los identificadores únicos de cada participante del esquema.
         """
-        # Verificación de condiciones
+        # Condition checks
         if cuerpo.characteristic != 2:
             raise ValueError(f'El cuerpo introducido debe tener como elemento base el 2.')
         if 2*r-l < len(participantes):
@@ -236,7 +236,7 @@ class ZhangMatsumoto:
         :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if self.__participaciones_secreto_anticipado is not None:
@@ -276,7 +276,7 @@ class ZhangMatsumoto:
         :param secreto: Secreto que se quiere codificar entre todos los participantes. Puede ser una lista de vectores de estado de dimensión q o un vector de estado de dimensión q^l
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if not secreto.is_valid():
@@ -287,7 +287,7 @@ class ZhangMatsumoto:
         qc = self.__circuito
         r = self.reconstruccion
         l = self.longitud_secreto
-        # Procedimiento estandar
+        # Standard procedure
         if len(self.__participaciones_anticipadas) == 0:
             x = np.arange(l, 2*r)
             qc.initialize(secreto, self.__participaciones[:l])  # Inicializar el secreto
@@ -300,7 +300,7 @@ class ZhangMatsumoto:
             matriz_2 = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-l), np.zeros((r, r-l))])])) # Matriz de evaluación
             matriz = extend_matrix(matriz_2)
             orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]
-        # Compartición anticipada
+        # Advance sharing
         else:
             qc.initialize(secreto, self.__participaciones_secreto_anticipado)
             elem_anticipados = [self.participantes_numero[participacion.name] for participacion in self.__participaciones_anticipadas]
@@ -323,7 +323,7 @@ class ZhangMatsumoto:
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto hasta una fase global.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__circuito is None:
             raise AttributeError(f'Ya se ha realizado el procedimiento de decodificación.')
         if self.__participaciones_anticipadas is not None:

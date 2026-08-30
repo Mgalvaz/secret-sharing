@@ -69,7 +69,7 @@ def random_array(sup, n):
     """
     return [secrets.randbelow(sup) for _ in range(n)]
 
-def random_polinomial(field, degree):
+def random_polynomial(field, degree):
     """
     Creates a cryptographically secure random polynomial over a field.
     :param field: The field over which the polynomial is constructed.

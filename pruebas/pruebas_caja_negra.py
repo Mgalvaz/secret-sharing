@@ -44,7 +44,7 @@ def validacion_secreto(Esquema, cuerpo, secreto, r=None, l=None, participantes=N
     else:  # Si no es ninguno de los anteriores es el esquema simplificado
         ss = Simplificado(cuerpo, participantes)
     try:
-        ss.codificacion(secreto)
+        ss.distribute(secreto)
     except Exception as e:
         print(f'{type(e).__name__}: {e}')
     print()
@@ -66,7 +66,7 @@ def validacion_participaciones(Esquema, cuerpo, r=None, l=None, participantes=No
     else:  # Si no es ninguno de los anteriores es el esquema simplificado
         secreto = b'\x00'
         ss = Simplificado(cuerpo, participantes)
-    part = ss.codificacion(secreto)
+    part = ss.distribute(secreto)
 
     if opcion == 'ne': # Se entregan participaciones inexistentes
         if Esquema in cuantico_umbral + cuantico_rampa:
@@ -79,7 +79,7 @@ def validacion_participaciones(Esquema, cuerpo, r=None, l=None, participantes=No
     else: # Si no es ninguno, se entregan participaciones insuficientes
         part = part[:r-1]
     try:
-        ss.decodificacion(part)
+        ss.reconstruct(part)
     except Exception as e:
         print(f'{type(e).__name__}: {e}')
     print()
@@ -99,16 +99,16 @@ def validacion_participaciones_anticipadas(Esquema, cuerpo, r=None, l=None, part
     try:
         if opcion == 'ne': # Se entregan participantes inexistentes
             anticipados = participantes[:1] + ['i']
-            ss.comparticion_anticipada(anticipados)
+            ss.advance_sharing(anticipados)
         elif opcion == 'd': # Se entregan participantes duplicados
             anticipados = participantes[:1] + participantes[:1]
-            ss.comparticion_anticipada(anticipados)
+            ss.advance_sharing(anticipados)
         elif opcion == 'df': # Se entregan participantes duplicados en dos fases (solo clásicos)
             anticipados = participantes[:1]
-            ss.comparticion_anticipada(anticipados)
-            ss.comparticion_anticipada(anticipados)
+            ss.advance_sharing(anticipados)
+            ss.advance_sharing(anticipados)
         else: # Si no es ninguno, se entregan más de los esperados
-            ss.comparticion_anticipada(participantes)
+            ss.advance_sharing(participantes)
     except Exception as e:
         print(f'{type(e).__name__}: {e}')
     print()
@@ -132,20 +132,20 @@ def validacion_orden(Esquema, cuerpo, r=None, l=None, participantes=None, orden=
         ss = Simplificado(cuerpo, participantes)
     try:
         if orden == 'dc': # pedir decodificar antes de codificar (solo cuantico)
-            ss.decodificacion([QuantumRegister(3,'a')])
+            ss.reconstruct([QuantumRegister(3, 'a')])
         elif orden == 'ca': # pedir comparticines anticipadas despues de codificar
-            ss.codificacion(secreto)
-            ss.comparticion_anticipada(['a'])
+            ss.distribute(secreto)
+            ss.advance_sharing(['a'])
         elif orden == 'cc': # pedir codificar tras haber codificado
-            ss.codificacion(secreto)
-            ss.codificacion(secreto)
+            ss.distribute(secreto)
+            ss.distribute(secreto)
         elif orden == 'dd': # pedir decodificar tras haber decodificado (solo cuánticos)
-            part = ss.codificacion(secreto)
-            ss.decodificacion(part)
-            ss.decodificacion(part)
+            part = ss.distribute(secreto)
+            ss.reconstruct(part)
+            ss.reconstruct(part)
         else: # compartir anticipadamente tras compartir anticipadamente (solo cuánticos)
-            ss.comparticion_anticipada(['a'])
-            ss.comparticion_anticipada(['a'])
+            ss.advance_sharing(['a'])
+            ss.advance_sharing(['a'])
     except Exception as e:
         print(f'{type(e).__name__}: {e}')
     print()

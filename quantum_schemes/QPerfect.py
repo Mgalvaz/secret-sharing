@@ -27,7 +27,7 @@ class CGL:
         :param r: Parámetro de reconstrucción del esquema (número mínimo de participantes necesarios para reconstruir el secreto).
         :param participantes: Lista de los identificadores únicos de cada participante del esquema.
         """
-        # Verificación de condiciones
+        # Condition checks
         if cuerpo.characteristic != 2:
             raise ValueError(f'El cuerpo introducido debe tener como elemento base el 2.')
         if 2*r-1 < len(participantes):
@@ -59,7 +59,7 @@ class CGL:
         :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if self.__participacion_secreto_anticipado is not None:
@@ -98,7 +98,7 @@ class CGL:
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if not secreto.is_valid():
@@ -108,7 +108,7 @@ class CGL:
 
         qc = self.__circuito
         r = self.reconstruccion
-        # Procedimiento estandar
+        # Standard procedure
         if len(self.__participaciones_anticipadas) == 0:
             x = np.arange(1, 2*r)
             qc.initialize(secreto, [self.__participaciones[0]])  # Inicializar el secreto
@@ -119,7 +119,7 @@ class CGL:
             matriz = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-1), np.zeros((r, r-1))])])) # Matriz de evaluación
             matriz = extend_matrix(matriz)  # Extender la matriz de numeros de F_q a vectores de F_2
             orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]  # Como qiskit es Little Endian, pero la matriz extendida está en Big Endian, hay que invertir el orden de los qubits de los participantes
-        # Compartición anticipada
+        # Advance sharing
         else:
             qc.initialize(secreto, self.__participacion_secreto_anticipado)
             elem_anticipados = [self.participantes_numero[participacion.name] for participacion in self.__participaciones_anticipadas]
@@ -143,7 +143,7 @@ class CGL:
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto hasta una fase global.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__circuito is None:
             raise AttributeError(f'Ya se ha realizado el procedimiento de decodificación.')
         if self.__participaciones_anticipadas is not None:

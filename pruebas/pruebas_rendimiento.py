@@ -18,7 +18,7 @@ num_cores = 9
 sim = StatevectorSimulator(max_parallel_threads=num_cores, max_parallel_experiments=num_cores)
 
 def tiempos_clasico(esquema, r, l=1, anticipada=None):
-    # Compartición anticipada
+    # Advance sharing
     if anticipada:
         inicio_anticipada = time.time()
         part_anticipadas = esquema.advance_sharing(anticipada)
@@ -30,7 +30,7 @@ def tiempos_clasico(esquema, r, l=1, anticipada=None):
         secreto = [secrets.token_bytes(N_BYTES) for _ in range(l)]
     # Codificación
     inicio_codificacion = time.time()
-    part_resto = esquema.codificacion(secreto)
+    part_resto = esquema.distribute(secreto)
     fin_codificacion = time.time()
     print('Duración de la codificación:', fin_codificacion - inicio_codificacion)
     if anticipada: # Eleccion aleatoria de los participantes que reconstruirán el secreto
@@ -39,12 +39,12 @@ def tiempos_clasico(esquema, r, l=1, anticipada=None):
         part_reconstruccion = random.sample(part_resto, r)
     # Decodificación
     inicio_decodificacion = time.time()
-    secreto_dec = esquema.decodificacion(part_reconstruccion)
+    secreto_dec = esquema.reconstruct(part_reconstruccion)
     fin_decodificacion = time.time()
     print('Duración de la decodificación:', fin_decodificacion - inicio_decodificacion)
 
 def tiempos_cuantico(esquema, r, l=1, anticipada=None, tipo=1):
-    # Compartición anticipada
+    # Advance sharing
     tiempo_anticipada = 0
     if anticipada:
         inicio_anticipada = time.time()
@@ -60,7 +60,7 @@ def tiempos_cuantico(esquema, r, l=1, anticipada=None, tipo=1):
     secreto = secreto/np.linalg.norm(secreto)
     # Codificación
     inicio_codificacion = time.time()
-    part_resto = esquema.codificacion(secreto)
+    part_resto = esquema.distribute(secreto)
     sim.run(getattr(esquema, f'_{type(esquema).__name__}__circuito'))
     fin_codificacion = time.time()
     tiempo_codificacion = fin_codificacion - inicio_codificacion - tiempo_anticipada
@@ -71,7 +71,7 @@ def tiempos_cuantico(esquema, r, l=1, anticipada=None, tipo=1):
         part_reconstruccion = random.sample(part_resto, r)
     # Decodificación
     inicio_decodificacion = time.time()
-    secreto_dec = esquema.decodificacion(part_reconstruccion)
+    secreto_dec = esquema.reconstruct(part_reconstruccion)
     fin_decodificacion = time.time()
     print('Duración de la decodificación:', fin_decodificacion - inicio_decodificacion - tiempo_codificacion - tiempo_anticipada)
 

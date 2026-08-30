@@ -89,7 +89,7 @@ def programa_clasico():
             secreto.append(sec)
 
     # Crear participaciones
-    participaciones = ss.codificacion(secreto)
+    participaciones = ss.distribute(secreto)
     for nombre, part_b64 in participaciones:
         print(f'{nombre}: {part_b64}')
 
@@ -114,7 +114,7 @@ def programa_clasico():
         nombres.append(nombre)
 
     # Reconstruir el secreto
-    secreto = ss.decodificacion(conjunto)
+    secreto = ss.reconstruct(conjunto)
     try:
         if l == 1:
             print('Secreto:', secreto.decode())

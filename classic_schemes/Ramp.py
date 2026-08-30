@@ -1,7 +1,7 @@
 import numpy as np
 from galois import Poly, lagrange_poly
 
-from utils import random_array, random_polinomial, bytes_to_int, int_to_bytes, int_to_b64str, b64str_to_int
+from utils import random_array, random_polynomial, bytes_to_int, int_to_bytes, int_to_b64str, b64str_to_int
 
 
 class ShamirRampa:
@@ -25,7 +25,7 @@ class ShamirRampa:
         :param l: Longitud del secreto que se quiere repartir.
         :param participantes: Lista de los identificadores únicos de cada participante del esquema.
         """
-        # Verificación de condiciones
+        # Condition checks
         if cuerpo.order <= len(participantes):
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
         if len(participantes) != len(set(participantes)):
@@ -52,7 +52,7 @@ class ShamirRampa:
         :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if len(self.__participaciones_anticipadas) > 0:
@@ -79,7 +79,7 @@ class ShamirRampa:
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if len(secreto) != self.longitud_secreto:
@@ -89,13 +89,13 @@ class ShamirRampa:
             if sec >= self.cuerpo.order:
                 raise ValueError(f'El secreto proporcionado nº{i}  debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
-        # Procedimiento estandar
+        # Standard procedure
         if len(self.__participaciones_anticipadas) == 0:
             polinomio = Poly(secreto_i + random_array(self.cuerpo.order, self.reconstruccion - self.longitud_secreto), field=self.cuerpo, order='asc')
             x = np.arange(1, len(self.participantes_nombre))
             # Generar el resto de las participaciones
             participaciones_b64 = int_to_b64str(polinomio(x), self.longitud_bytes)
-        # Compartición anticipada
+        # Advance sharing
         else:
             # Obtener el elemento asociado a cada participante y decodificar su participación
             nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
@@ -106,7 +106,7 @@ class ShamirRampa:
             polinomio_secreto = Poly(secreto_i, field=self.cuerpo, order='asc') # f_s
             lagrange = lagrange_poly(puntos_anticipados, (valores_anticipados - polinomio_secreto(puntos_anticipados)) / puntos_anticipados ** self.longitud_secreto)
             if len(puntos_anticipados) < self.reconstruccion - self.longitud_secreto:  # Si el número de participaciones anticipadas es menor que r-l, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * random_polinomial(
+                polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * random_polynomial(
                     self.cuerpo, self.reconstruccion - self.longitud_secreto - len(puntos_anticipados) - 1)
             else:  # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
@@ -124,7 +124,7 @@ class ShamirRampa:
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto.
         """
-        # Verificación de condiciones
+        # Condition checks
         if len(participaciones) < self.reconstruccion:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
         nombres, valores_b64 = zip(*participaciones[:self.reconstruccion])
@@ -172,7 +172,7 @@ class McElieceSarwate:
         :param l: Longitud del secreto que se quiere repartir.
         :param participantes: Lista de los identificadores únicos de cada participante del esquema.
         """
-        # Verificación de condiciones
+        # Condition checks
         if cuerpo.order - l < len(participantes):
             raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor o igual que el orden del cuerpo de trabajo menos la longitud del secreto ({cuerpo.order - l}).')
         if len(participantes) != len(set(participantes)):
@@ -199,7 +199,7 @@ class McElieceSarwate:
         :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if len(self.__participaciones_anticipadas) > 0:
@@ -226,7 +226,7 @@ class McElieceSarwate:
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
-        # Verificación de condiciones
+        # Condition checks
         if self.__participaciones_anticipadas is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if len(secreto) != self.longitud_secreto:
@@ -237,14 +237,14 @@ class McElieceSarwate:
                 raise ValueError(f'El secreto proporcionado nº{i}  debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
         alpha = self.cuerpo.Range(0, self.longitud_secreto)
-        # Procedimiento estandar
+        # Standard procedure
         if len(self.__participaciones_anticipadas) == 0:
             x = np.arange(self.longitud_secreto, len(self.participantes_nombre))
             # Hay que construir un polinomio que interpole al secreto en sus respectivos puntos y que sea de grado r - 1
             lagrange = lagrange_poly(alpha, self.cuerpo(secreto_i))
-            polinomio = lagrange + Poly.Roots(alpha, field=self.cuerpo) * random_polinomial(self.cuerpo,
+            polinomio = lagrange + Poly.Roots(alpha, field=self.cuerpo) * random_polynomial(self.cuerpo,
                                                                                             self.reconstruccion - self.longitud_secreto - 1)
-        # Compartición anticipada
+        # Advance sharing
         else:
             # Obtener el elemento asociado a cada participante y decodificar su participación
             nombres_anticipados, valores_anticipados_b64 = zip(*self.__participaciones_anticipadas)
@@ -256,7 +256,7 @@ class McElieceSarwate:
             valores_lagrange = self.cuerpo(np.concatenate([secreto_i, valores_anticipados]))
             lagrange = lagrange_poly(puntos_lagrange, valores_lagrange)
             if len(puntos_anticipados) < self.reconstruccion - self.longitud_secreto:  # Si el número de participaciones anticipadas es menor que r-l, hay que completar el polinomio con aleatoriedad
-                polinomio = lagrange + Poly.Roots(np.concatenate([alpha, puntos_anticipados]), field=self.cuerpo) * random_polinomial(
+                polinomio = lagrange + Poly.Roots(np.concatenate([alpha, puntos_anticipados]), field=self.cuerpo) * random_polynomial(
                     self.cuerpo, self.reconstruccion - self.longitud_secreto - len(puntos_anticipados) - 1)
             else:  # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
@@ -274,7 +274,7 @@ class McElieceSarwate:
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto.
         """
-        # Verificación de condiciones
+        # Condition checks
         if len(participaciones) < self.reconstruccion:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
         nombres, valores_b64 = zip(*participaciones[:self.reconstruccion])
@@ -295,7 +295,7 @@ class McElieceSarwate:
         :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
         :return: El secreto.
         """
-        # Verificación de condiciones
+        # Condition checks
         r = self.reconstruccion
         if len(participaciones) < r:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
