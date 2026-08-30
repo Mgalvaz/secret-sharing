@@ -52,8 +52,9 @@ scheme = Shamir(galois.GF(2, 30), 3, ['Alice', 'Bob', 'Charles', 'Daisy'])
 ```
 
 Si se desea realizar compartición anticipada, se debe llamar al método `comparticion_anticipada` con los participantes correspondientes.
+
 ```python
-advance = scheme.comparticion_anticipada('Bob', 'Daisy')
+advance = scheme.advance_sharing('Bob')
 ```
 
 Independientemente de si se ha realizado la compartición anticipada o no, en caso de querer compartir un secreto se debe llamar al método `codificacion`.

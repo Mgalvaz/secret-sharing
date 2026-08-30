@@ -70,7 +70,7 @@ def programa_clasico():
                 part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i}: ')
             participantes_anticipados.append(part_anticipado)
         # Crear particpaciones anticipadas
-        participaciones_anticipadas = ss.comparticion_anticipada(participantes_anticipados)
+        participaciones_anticipadas = ss.advance_sharing(participantes_anticipados)
         for nombre, ant_b64 in participaciones_anticipadas:
             print(f'{nombre}: {ant_b64}')
 

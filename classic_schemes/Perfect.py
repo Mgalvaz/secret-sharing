@@ -1,68 +1,67 @@
 import numpy as np
-from galois import Poly, lagrange_poly
+from galois import Poly, lagrange_poly, GF
 
 from utils import random_array, random_polinomial, bytes_to_int, int_to_bytes, int_to_b64str, b64str_to_int
 
 class Shamir:
     r"""
-    Esquema de compartición de secretos de Shamir sobre el cuerpo $\mathbb{F}_{p^m}$.
+    Shamir's secret sharing scheme over the finite field $\mathbb{F}_{p^m}$.
 
-    Ejemplo:
-        Crea un esquema de Shamir de umbral-(4,6) sobre el cuerpo $\mathbb{F}_{3^5}$ para los participantes ['a', 'b', 'c', 'd', 'e', 'f'].
+    Example:
+        Creates a threshold-(4,6) Shamir scheme over the field $\mathbb{F}_{3^5}$ for the participants ['a', 'b', 'c', 'd', 'e', 'f'].
 
         .. ipython:: python
 
-            cuerpo = galois.GF(3, 5)
-            sh = Shamir(cuerpo, 4, ['a', 'b', 'c', 'd', 'e', 'f'])
+            sh = Shamir(3**5, 4, ['a', 'b', 'c', 'd', 'e', 'f'])
     """
-    def __init__(self, cuerpo, r, participantes):
+    def __init__(self, order, r, participants):
         r"""
-        Crea un esquema de compartición de secretos de Shamir sobre el cuerpo $\mathbb{F}_{p^m}$.
-        :param cuerpo: El cuerpo finito sobre sobre el que el esquema está construido.
-        :param r: Parámetro de reconstrucción del esquema (número mínimo de participantes necesarios para reconstruir el secreto).
-        :param participantes: Lista de los nombres únicos de cada participante del esquema.
+        Creates a Shamir secret sharing scheme over the finite field $\mathbb{F}_{p^m}$.
+        :param order: The order of the finite field over which the scheme is constructed.
+        :param r: The reconstruction threshold of the scheme, i.e., the minimum number of participants required to reconstruct the secret.
+        :param participants: A list containing the unique names of all participants in the scheme.
         """
-        # Verificación de condiciones
-        if cuerpo.order <= len(participantes):
-            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
-        if len(participantes) != len(set(participantes)):
-            raise ValueError(f'Se han encontrado participantes duplicados.')
-        if len(participantes) < r:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
+        # Condition checks
+        if order <= len(participants):
+            raise ValueError(f'The number of participants ({len(participants)}) must be less than the order of the underlying field ({order}).')
+        if len(participants) != len(set(participants)):
+            raise ValueError('Duplicate participants were found.')
+        if len(participants) < r:
+            raise ValueError(f'The reconstruction threshold ({r}) must be less than or equal to the number of participants ({len(participants)}).')
         if r < 2:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser mayor que 1.')
+            raise ValueError(f'The reconstruction threshold ({r}) must be greater than 1.')
 
-        self.cuerpo = cuerpo
-        self.reconstruccion = r
-        self.__participaciones_anticipadas = []
-        self.longitud_bytes = ((cuerpo.order - 1).bit_length() + 7) // 8
-        self.participantes_nombre = np.array([None] + participantes)
-        self.participantes_numero = {nombre: i for i, nombre in enumerate(participantes, 1)}
+        self.cuerpo = GF(order)
+        self.reconstruction = r
+        self.__advance_shares = []
+        self.byte_length = ((order - 1).bit_length() + 7) // 8
+        self.participants_name = np.array([None] + participants)
+        self.participants_number = {nombre: i for i, nombre in enumerate(participants, 1)}
 
-    def comparticion_anticipada(self, participantes_anticipados):
+    def advance_sharing(self, advance_participants):
         """
-        Crea participaciones anticipadas para cada participante especificado.
-        El formato de las participaciones es: (nombre, participación).
-        :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
-        :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
+        Creates advance shares for each specified participant.
+        The shares are represented as tuples of the form (name, share).
+        :param advance_participants: List of participants to receive pre-distributed shares.
+        :return: A list containing the pre-distributed shares assigned to each specified participant.
         """
-        # Verificación de condiciones
-        if self.__participaciones_anticipadas is None:
-            raise AttributeError(f'Ya se han repartido todas las participaciones.')
-        if len(self.__participaciones_anticipadas) > 0:
-            conjunto_nombres_anticipados = set(list(zip(*self.__participaciones_anticipadas))[0])
-            for nombre in participantes_anticipados:
-                if nombre in conjunto_nombres_anticipados:
-                    raise ValueError(f"El participante '{nombre}' ya ha recibido una participación anticipada.")
-        self._verificar_nombres(participantes_anticipados)
-        if self.reconstruccion - len(self.__participaciones_anticipadas) <= len(participantes_anticipados):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados) + len(self.__participaciones_anticipadas)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1}).')
+        # Condition checks
+        if self.__advance_shares is None:
+            raise AttributeError('All shares have already been distributed.')
+        if len(self.__advance_shares) > 0:
+            advance_names_set = set(list(zip(*self.__advance_shares))[0])
+            for name in advance_participants:
+                if name in advance_names_set:
+                    raise ValueError(f"Participant '{name}' has already received a pre-distributed share.")
+        self._verify_names(advance_participants)
+        if self.reconstruction - len(self.__advance_shares) <= len(advance_participants):
+            raise ValueError(f'The number of pre-distributed shares ({len(advance_participants) + len(self.__advance_shares)}) must be less than or equal to the privacy threshold ({self.reconstruction - 1}).')
 
-        # Generar las participaciones anticipadas, que son elementos aleatorios del cuerpo
-        aleatoriedad = random_array(self.cuerpo.order, len(participantes_anticipados))
-        aleatoriedad_b64 = int_to_b64str(aleatoriedad, self.longitud_bytes)
-        extras = list(zip(participantes_anticipados, aleatoriedad_b64))
-        self.__participaciones_anticipadas.extend(extras)
+        # Generate the advance shares, which are random field elements
+        randomness = random_array(self.cuerpo.order, len(advance_participants))
+        randomness_b64 = int_to_b64str(randomness, self.byte_length)
+        extras = list(zip(advance_participants, randomness_b64))
+        self.__advance_shares.extend(extras)
         return extras
 
     def codificacion(self, secreto):
@@ -73,36 +72,36 @@ class Shamir:
         :param secreto: Secreto que se quiere codificar entre todos los participantes.
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
-        if self.__participaciones_anticipadas is None:
+        if self.__advance_shares is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         secreto_i = bytes_to_int(secreto)
         if secreto_i >= self.cuerpo.order:
             raise ValueError(f'El secreto proporcionado debe ser menor que el orden del cuerpo de trabajo ({self.cuerpo.order}).')
 
         # Procedimiento estandar
-        if len(self.__participaciones_anticipadas) == 0:
-            polinomio = Poly(random_array(self.cuerpo.order, self.reconstruccion - 1) + [secreto_i], field=self.cuerpo)
-            x = np.arange(1, len(self.participantes_nombre))
+        if len(self.__advance_shares) == 0:
+            polinomio = Poly(random_array(self.cuerpo.order, self.reconstruction - 1) + [secreto_i], field=self.cuerpo)
+            x = np.arange(1, len(self.participants_name))
         # Compartición anticipada
         else:
             # Obtener el elemento asociado a cada participante y decodificar su participación
-            nombres, valores_b64 = zip(*self.__participaciones_anticipadas)
-            puntos_anticipados = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres) + [0])
+            nombres, valores_b64 = zip(*self.__advance_shares)
+            puntos_anticipados = self.cuerpo(list(self.participants_number[nombre] for nombre in nombres) + [0])
             valores_anticipados = self.cuerpo(b64str_to_int(valores_b64) + [secreto_i])
-            x = np.setdiff1d(np.arange(1, len(self.participantes_nombre)), puntos_anticipados)
+            x = np.setdiff1d(np.arange(1, len(self.participants_name)), puntos_anticipados)
 
             # Se determina un polinomio de grado r-1 compatible con las participaciones anticipadas
             lagrange = lagrange_poly(puntos_anticipados, valores_anticipados)
-            if len(puntos_anticipados) < self.reconstruccion - 1: # Si el número de participaciones anticipadas es menor que r-1, hay que completar el polinomio con aleatoriedad
+            if len(puntos_anticipados) < self.reconstruction - 1: # Si el número de participaciones anticipadas es menor que r-1, hay que completar el polinomio con aleatoriedad
                 polinomio = lagrange + Poly.Roots(puntos_anticipados, field=self.cuerpo) * random_polinomial(
-                    self.cuerpo, self.reconstruccion - len(puntos_anticipados) - 2)
+                    self.cuerpo, self.reconstruction - len(puntos_anticipados) - 2)
             else: # Si no, el único polinomio disponible es el de Lagrange
                 polinomio = lagrange
 
         # Generar el resto de las participaciones
-        participaciones_b64 = int_to_b64str(polinomio(x), self.longitud_bytes)
-        self.__participaciones_anticipadas = None  # Se eliminan las participaciones anticipadas almacenadas para mayor seguridad
-        return list(zip(self.participantes_nombre[x], participaciones_b64))
+        participaciones_b64 = int_to_b64str(polinomio(x), self.byte_length)
+        self.__advance_shares = None  # Se eliminan las participaciones anticipadas almacenadas para mayor seguridad
+        return list(zip(self.participants_name[x], participaciones_b64))
 
     def _decodificacion_alternativa(self, participaciones):
         """
@@ -113,13 +112,13 @@ class Shamir:
         :return: El secreto.
         """
         # Verificación de condiciones
-        if len(participaciones) < self.reconstruccion:
+        if len(participaciones) < self.reconstruction:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto')
-        nombres, valores_b64 = zip(*participaciones[:self.reconstruccion])
-        self._verificar_nombres(nombres)
+        nombres, valores_b64 = zip(*participaciones[:self.reconstruction])
+        self._verify_names(nombres)
 
         # Obtener el elemento asociado a cada participante y decodificar su participación
-        puntos = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres))
+        puntos = self.cuerpo(list(self.participants_number[nombre] for nombre in nombres))
         valores = self.cuerpo(b64str_to_int(valores_b64))
         # Reconstruir el polinomio generador y el secreto como su coeficiente independiente
         polinomio = lagrange_poly(puntos, valores)
@@ -134,14 +133,14 @@ class Shamir:
         :return: El secreto.
         """
         # Verificación de condiciones
-        r = self.reconstruccion
+        r = self.reconstruction
         if len(participaciones) < r:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
         nombres, valores_b64 = zip(*participaciones[:r])
-        self._verificar_nombres(nombres)
+        self._verify_names(nombres)
 
         # Obtener el elemento asociado a cada participante y decodificar su participación
-        puntos = self.cuerpo(list(self.participantes_numero[nombre] for nombre in nombres))
+        puntos = self.cuerpo(list(self.participants_number[nombre] for nombre in nombres))
         valores = self.cuerpo(b64str_to_int(valores_b64))
         # Calcular el valor del polinomio generador en 0 sin reconstruirlo
         mascara = ~np.eye(r, dtype=bool) # Máscara de los elementos x_h de la fórmula
@@ -152,7 +151,7 @@ class Shamir:
         coef = numerador / denominador # Cálculo de l_i
         return int_to_bytes(np.sum(valores * coef))  # Se devuelve la suma y_i * l_i
 
-    def _verificar_nombres(self, nombres):
+    def _verify_names(self, nombres):
         """
         Verifica que los participantes sean válidos, es decir, que no haya nombres duplicados y todos los nombres estén registrados como participantes.
         :param nombres: La secuencia de nombres que se quiere comprobar
@@ -161,7 +160,7 @@ class Shamir:
         if len(nombres) != len(set(nombres)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
         # Comprobar que los participantes existen
-        conjunto_nombres = self.participantes_numero
+        conjunto_nombres = self.participants_number
         for nombre in nombres:
             if nombre not in conjunto_nombres:
                 raise ValueError(f"El participante '{nombre}' no está registrado.")

@@ -21,7 +21,7 @@ def tiempos_clasico(esquema, r, l=1, anticipada=None):
     # Compartición anticipada
     if anticipada:
         inicio_anticipada = time.time()
-        part_anticipadas = esquema.comparticion_anticipada(anticipada)
+        part_anticipadas = esquema.advance_sharing(anticipada)
         fin_anticipada = time.time()
         print('Duración de la compartición anticipada:', fin_anticipada - inicio_anticipada)
     if l==1: # Elección aleatoria del secreto
@@ -48,7 +48,7 @@ def tiempos_cuantico(esquema, r, l=1, anticipada=None, tipo=1):
     tiempo_anticipada = 0
     if anticipada:
         inicio_anticipada = time.time()
-        part_anticipadas = esquema.comparticion_anticipada(anticipada)
+        part_anticipadas = esquema.advance_sharing(anticipada)
         sim.run(getattr(esquema, f'_{type(esquema).__name__}__circuito'))
         fin_anticipada = time.time()
         tiempo_anticipada = fin_anticipada - inicio_anticipada

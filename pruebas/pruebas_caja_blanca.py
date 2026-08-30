@@ -81,7 +81,7 @@ def comparticion_anticipada_clasico(Esquema, cuerpo, r=None, l=None, participant
         esquema = Esquema(cuerpo, r, l, participantes)
         secreto = [random.randint(0, cuerpo.order-1) for _ in range(l)]
         anticipados = random.sample(participantes, r - l - sobran)
-    participaciones_anticipadas = esquema.comparticion_anticipada(anticipados)
+    participaciones_anticipadas = esquema.advance_sharing(anticipados)
     print('Participaciones anticipadas:', participaciones_anticipadas)
     print('Secreto =', secreto)
     secreto = int_to_bytes(secreto)
@@ -165,7 +165,7 @@ def comparticion_anticipada_cuantico(Esquema, cuerpo, r=None, l=None, participan
         else:
             m = np.arange(2 * r - 1, l - 1, -1)
             funcion = lambda gf, s, r: construir_polinomios_E(gf, np.arange(l), s, r)
-    participaciones_anticipadas = esquema.comparticion_anticipada(anticipados)
+    participaciones_anticipadas = esquema.advance_sharing(anticipados)
     print('Participaciones anticipadas:', participaciones_anticipadas)
     print('Secreto =', secreto.to_dict())
     participaciones = esquema.codificacion(secreto)
