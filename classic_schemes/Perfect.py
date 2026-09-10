@@ -37,7 +37,7 @@ class Shamir:
         self.__advance_shares = []
         self.byte_length = ((order - 1).bit_length() + 7) // 8
         self.participants_name = np.array([None] + participants)
-        self.participants_number = {nombre: i for i, nombre in enumerate(participants, 1)}
+        self.participants_number = {name: i for i, name in enumerate(participants, 1)}
 
     def advance_sharing(self, advance_participants):
         """

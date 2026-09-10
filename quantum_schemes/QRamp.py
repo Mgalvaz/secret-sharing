@@ -56,7 +56,7 @@ class Ogawa:
         self.__circuito = QuantumCircuit(*self.__participaciones)
         self.participantes_numero = {nombre: i for i, nombre in enumerate(participantes, 1)}
 
-    def comparticion_anticipada(self, participantes_anticipados):
+    def advance_sharing(self, participantes_anticipados):
         """
         Crea participaciones anticipadas para cada participante especificado.
         Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.
@@ -95,7 +95,7 @@ class Ogawa:
         self.elem_anticipadas_no_repartidas = elem_resto[:r - len(part_anticipadas) - l].astype(int)
         return part_anticipadas
 
-    def codificacion(self, secreto):
+    def distribute(self, secreto):
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.
@@ -142,7 +142,7 @@ class Ogawa:
         # Generar el resto de las participaciones reales
         return list(self.__participaciones[i-1] for i in x[x <= len(self.participantes_numero)])
 
-    def decodificacion(self, participaciones):
+    def reconstruct(self, participaciones):
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.
@@ -229,7 +229,7 @@ class ZhangMatsumoto:
         self.__circuito = QuantumCircuit(*self.__participaciones)
         self.participantes_numero = {nombre: i for i, nombre in enumerate(participantes, l)}
 
-    def comparticion_anticipada(self, participantes_anticipados):
+    def advance_sharing(self, participantes_anticipados):
         """
         Crea participaciones anticipadas para cada participante especificado.
         Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.
@@ -268,7 +268,7 @@ class ZhangMatsumoto:
         self.elem_anticipadas_no_repartidas = elem_resto[:r - len(part_anticipadas) - l].astype(int)
         return part_anticipadas
 
-    def codificacion(self, secreto):
+    def distribute(self, secreto):
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.
@@ -316,7 +316,7 @@ class ZhangMatsumoto:
         # Generar el resto de las participaciones reales
         return list(self.__participaciones[i-l] for i in x[x < len(self.participantes_numero)+l])
 
-    def decodificacion(self, participaciones):
+    def reconstruct(self, participaciones):
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.

@@ -93,7 +93,7 @@ def programa_cuantico():
                 part_anticipado = input(f'Escriba el nombre del participante anticipado nº{i}: ')
             participantes_anticipados.append(part_anticipado)
         # Crear particpaciones anticipadas
-        participaciones_anticipadas = ss.comparticion_anticipada(participantes_anticipados)
+        participaciones_anticipadas = ss.advance_sharing(participantes_anticipados)
         for registro in participaciones_anticipadas:
             print(f'{registro.name}: {registro}')
             diccionario_participaciones[registro.name] = registro
@@ -113,7 +113,7 @@ def programa_cuantico():
                 secreto = secreto.tensor(sec_i)
 
     # Crear participaciones
-    participaciones = ss.codificacion(secreto)
+    participaciones = ss.distribute(secreto)
     for registro in participaciones:
         print(f'{registro.name}: {registro}')
         diccionario_participaciones[registro.name] = registro
@@ -138,7 +138,7 @@ def programa_cuantico():
         nombres.append(nombre)
 
     # Reconstruir el secreto
-    secreto = ss.decodificacion(registros)
+    secreto = ss.reconstruct(registros)
     secreto = Statevector(secreto, dims=tuple(cuerpo.order for _ in range(l)))
     print('Secreto:', secreto.to_dict())
 

@@ -1,16 +1,15 @@
-from classic_schemes import Shamir, Simplificado, ShamirRampa, McElieceSarwate
-from galois import GF
+from classic_schemes import Shamir, Additive, ShamirRampa, McElieceSarwate
 
 from utils import ask_int
 
 def programa_clasico():
-    cuerpo = GF(2, 64)
+    order = 2**64
 
     # Pedir los participantes y los datos del esquema
     participantes = []
     n = ask_int('Escriba el número de particiantes: ',
-                f'El número de participantes debe ser al menos 2 y menor que el orden del cuerpo de trabajo ({cuerpo.characteristic}^{cuerpo.degree})',
-                lambda x: 2 <= x < cuerpo.order)
+                f'El número de participantes debe ser al menos 2 y menor que el orden del cuerpo de trabajo ({order})',
+                lambda x: 2 <= x < order)
     for i in range(1, n+1):
         participante = input(f'Escriba el nombre del participante nº{i}: ')
         while participante in participantes:
@@ -31,23 +30,23 @@ def programa_clasico():
         if r == n:
             yn = input('Se ha detectado que el número de participantes necesarios para reconstruir el esquema coincide con el número de participantes, ¿desea realizar el esquema simplificado? (y/n): ')
             if yn.lower() in ('si', 's', 'y', 'yes'):
-                ss = Simplificado(cuerpo, participantes)
+                ss = Additive(order, participantes)
             else:
-                ss = Shamir(cuerpo, r, participantes)
+                ss = Shamir(order, r, participantes)
         else:
-            ss = Shamir(cuerpo, r, participantes)
+            ss = Shamir(order, r, participantes)
     else:
         print('¿Cual de los dos siguientes esquemas desea realizar?\n1.- Esquema de Shamir en rampa.\n2.- Esquema de McEliece-Sarwate.')
         esq = ask_int('Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if esq == 1:
-            ss = ShamirRampa(cuerpo, r, l, participantes)
+            ss = ShamirRampa(order, r, l, participantes)
         else:
-            if n+l > cuerpo.order:
+            if n+l > order:
                 print('Debido a que el número de participantes es mayor que el orden del cuerpo menos la longitud del secreto, no se puede realizar el esquema de McEliece-Sarwate, se procede con el esquema de Shamir en rampa.')
                 print()
-                ss = ShamirRampa(cuerpo, r, l, participantes)
+                ss = ShamirRampa(order, r, l, participantes)
             else:
-                ss = McElieceSarwate(cuerpo, r, l, participantes)
+                ss = McElieceSarwate(order, r, l, participantes)
 
     # Preguntar por participaciones anticipadas
     yn = input('¿Desea repartir participaciones anticipadas? (y/n): ')

@@ -1,2 +1,2 @@
-from .Perfect import Simplificado, Shamir
+from .Perfect import Additive, Shamir
 from .Ramp import ShamirRampa, McElieceSarwate

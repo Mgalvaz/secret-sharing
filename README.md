@@ -48,7 +48,7 @@ Antes de nada se debe construir un objeto de la clase correspondiente.
 import galois
 from classic_schemes import Shamir
 
-scheme = Shamir(galois.GF(2, 30), 3, ['Alice', 'Bob', 'Charles', 'Daisy'])
+scheme = Shamir(2**30, 3, ['Alice', 'Bob', 'Charles', 'Daisy'])
 ```
 
 Si se desea realizar compartición anticipada, se debe llamar al método `comparticion_anticipada` con los participantes correspondientes.

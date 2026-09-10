@@ -45,7 +45,7 @@ class ShamirRampa:
         self.participantes_nombre = np.array([None] + participantes)
         self.participantes_numero = {nombre: i for i, nombre in enumerate(participantes, 1)}
 
-    def comparticion_anticipada(self, participantes_anticipados):
+    def advance_sharing(self, participantes_anticipados):
         """
         Crea participaciones anticipadas para cada participante especificado.
         El formato de las participaciones es: (Identificador, Participación).
@@ -71,7 +71,7 @@ class ShamirRampa:
         self.__participaciones_anticipadas.extend(extras)
         return extras
 
-    def codificacion(self, secreto):
+    def distribute(self, secreto):
         """
         Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
         El formato de las participaciones es: (Identificador, Participación).
@@ -117,7 +117,7 @@ class ShamirRampa:
         self.__participaciones_anticipadas = None  # Se eliminan las participaciones anticipadas almacenadas para mayor seguridad
         return list(zip(self.participantes_nombre[x], participaciones_b64))
 
-    def decodificacion(self, participaciones):
+    def reconstruct(self, participaciones):
         """
         Reconstruye el secreto codificado en las participaciones proporcionadas.
         El formato de las participaciones es: (Identificador, Participación).
