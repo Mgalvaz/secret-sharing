@@ -141,7 +141,7 @@ class Shamir:
         names, values_b64 = zip(*shares[:r])
         self._validate_names(names)
 
-        # Obtain the element associated with each participant and decode # their share
+        # Obtain the element associated with each participant and decode their share
         x = self.field(list(self.participants_number[name] for name in names))
         y = self.field(b64str_to_int(values_b64))
         # Compute the value of the generating polynomial at 0 without explicitly reconstructing it
@@ -172,11 +172,11 @@ class Additive:
     r"""
     Additive secret sharing scheme over the finite field $\mathbb{F}_{p^m}$.
 
-    Ejemplo:
+    Example:
         Creates a (5,5)-threshold scheme over the field $\mathbb{F}_{5^4}$ for the participants ['a', 'b', 'c', 'd', 'e'].
         .. ipython:: python
 
-            sh = Simplificado(5**4, ['a', 'b', 'c', 'd', 'e'])
+            sh = Additive(5**4, ['a', 'b', 'c', 'd', 'e'])
     """
     def __init__(self, order, participants):
         r"""
