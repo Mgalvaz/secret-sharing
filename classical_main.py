@@ -1,4 +1,4 @@
-from classic_schemes import Shamir, Additive, ShamirRampa, McElieceSarwate
+from classic_schemes import Shamir, Additive, RampShamir, McElieceSarwate
 
 from utils import ask_int
 
@@ -39,12 +39,12 @@ def programa_clasico():
         print('¿Cual de los dos siguientes esquemas desea realizar?\n1.- Esquema de Shamir en rampa.\n2.- Esquema de McEliece-Sarwate.')
         esq = ask_int('Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if esq == 1:
-            ss = ShamirRampa(order, r, l, participantes)
+            ss = RampShamir(order, r, l, participantes)
         else:
             if n+l > order:
                 print('Debido a que el número de participantes es mayor que el orden del cuerpo menos la longitud del secreto, no se puede realizar el esquema de McEliece-Sarwate, se procede con el esquema de Shamir en rampa.')
                 print()
-                ss = ShamirRampa(order, r, l, participantes)
+                ss = RampShamir(order, r, l, participantes)
             else:
                 ss = McElieceSarwate(order, r, l, participantes)
 

@@ -98,7 +98,7 @@ class Shamir:
             else: # Otherwise, the Lagrange polynomial is the only possible one
                 polynomial = lagrange
 
-        # Generate the remaining shares
+        # Generate remaining shares
         shares_b64 = int_to_b64str(polynomial(x), self.byte_length)
         self.__advance_shares = None  # Delete the stored advance shares for further security
         return list(zip(self.participants_name[x], shares_b64))
@@ -108,7 +108,6 @@ class Shamir:
         Reconstructs the secret encoded in the provided shares.
         The shares are represented as tuples of the form (name, share).
         This version first reconstructs the generating polynomial and then returns the secret as its constant coefficient. This method is correct but less efficient than ``reconstruct``, which computes the secret directly without creating the Lagrange polynomial.
-
         :param shares: Sequence containing the shares of the participants who wish to reconstruct the secret.
         :return: The secret.
         """
@@ -234,7 +233,7 @@ class Additive:
             raise AttributeError('All shares have already been distributed.')
         secret_int = bytes_to_int(secret)
         if secret_int >= self.field.order:
-            raise ValueError(f'The provided secret must be smaller than the order of the underlying field ({self.cuerpo.order}).')
+            raise ValueError(f'The provided secret must be smaller than the order of the underlying field ({self.field.order}).')
 
         # Standard procedure
         if len(self.__advance_shares) == 0:
@@ -249,41 +248,42 @@ class Additive:
             x = np.setdiff1d(self.participants, names).tolist()
             advance_sum = y.sum()
 
-        # Generate the remaining shares
+        # Generate remaining shares
         shares = self.field(random_array(self.field.order, len(x) - 1))
         shares = np.append(shares, self.field(secret_int) - shares.sum() - advance_sum) # The last share is equal to the secret minus the sum of all preceding shares
         shares_b64 = int_to_b64str(shares, self.byte_length)
         self.__advance_shares = None  # Delete the stored advance shares for further security
         return list(zip(x, shares_b64))
 
-    def reconstruct(self, participaciones):
+    def reconstruct(self, shares):
         """
-        Reconstruye el secreto codificado en las participaciones proporcionadas.
-        El formato de las participaciones es: (nombre, participación).
-        :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
-        :return: El secreto.
+        Reconstructs the secret encoded in the provided shares.
+        The shares are represented as tuples of the form (name, share).
+        This version reconstructs the secret directly using the Lagrange interpolation formula evaluated at 0.
+        :param shares: Sequence containing the shares of the participants who wish to reconstruct the secret.
+        :return: The secret.
         """
         # Condition checks
-        if len(participaciones) < len(self.participantes):
-            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
-        nombres, valores_b64 = zip(*participaciones[:len(self.participantes)])
-        self._validate_names(nombres)
+        if len(shares) < len(self.participants):
+            raise ValueError('Not enough shares were provided to recover the secret.')
+        names, values_b64 = zip(*shares[:len(self.participants)])
+        self._validate_names(names)
 
-        # Obtener las participaciones
-        valores = self.cuerpo(b64str_to_int(valores_b64))
-        # El secreto es la suma de todas las participaciones
-        return int_to_bytes(valores.sum())
+        # Obtain shares
+        shares_values = self.field(b64str_to_int(values_b64))
+        # The secret is the sum of all shares
+        return int_to_bytes(shares_values.sum())
 
-    def _validate_names(self, nombres):
+    def _validate_names(self, names):
         """
-        Verifica que los participantes sean válidos, es decir, que no haya nombres duplicados y todos los nombres estén registrados como participantes.
-        :param nombres: La secuencia de nombres que se quiere comprobar
+        Verifies that the participants are valid, i.e., that there are no duplicate names and that all names correspond to registered participants.
+        :param names: Sequence of participant names to validate.
         """
-        # Comprobar no elementos duplicados
-        if len(nombres) != len(set(nombres)):
-            raise ValueError(f'Se han encontrado participantes duplicados.')
-        # Comprobar que los participantes existen
-        conjunto_nombres = set(self.participantes)
-        for nombre in nombres:
-            if nombre not in conjunto_nombres:
-                raise ValueError(f"El participante '{nombre}' no está registrado.")
+        # Check for duplicate names
+        if len(names) != len(set(names)):
+            raise ValueError('Duplicate participants were found.')
+        # Check that all participants are registered
+        names_set = set(self.participants)
+        for name in names:
+            if name not in names_set:
+                raise ValueError(f"Participant '{name}' is not registered")
