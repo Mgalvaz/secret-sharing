@@ -221,7 +221,7 @@ class McElieceSarwate:
         """
         Creates the shares for all participants according to the given secret.
         The shares are represented as tuples of the form (name, share).
-        If pre-distributed shares have been assigned, the generated shares will be consistent with them.
+        If advance shares have been assigned, the generated shares will be consistent with them.
         :param secret: The secret to be shared among the participants.
         :return: A list containing the shares of all participants who did not receive an advance share.
         """
@@ -253,14 +253,14 @@ class McElieceSarwate:
             x_lagrange = self.field(np.concatenate([alpha, x_advance]))
             y_lagrange = self.field(np.concatenate([secret_int, y_advance]))
             lagrange = lagrange_poly(x_lagrange, y_lagrange)
-            if len(x_advance) < self.reconstruction - self.secret_length:  # If fewer than r-l pre-distributed shares are available, complete the polynomial with randomness
+            if len(x_advance) < self.reconstruction - self.secret_length:  # If fewer than r-l padvance shares are available, complete the polynomial with randomness
                 polynomial = lagrange + Poly.Roots(np.concatenate([alpha, x_advance]), field=self.field) * random_polynomial(self.field, self.reconstruction - self.secret_length - len(x_advance) - 1)
             else:  # Otherwise, the Lagrange polynomial is the only possible one
                 polynomial = lagrange
 
         # Generate the remaining shares
         shares_b64 = int_to_b64str(polynomial(x), self.byte_length)
-        self.__advance_shares = None  # Delete the stored pre-distributed shares for further security
+        self.__advance_shares = None  # Delete the stored advance shares for further security
         return list(zip(self.participants_name[x], shares_b64))
 
     def _alternative_reconstruct(self, shares):
