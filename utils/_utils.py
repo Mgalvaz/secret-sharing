@@ -1,7 +1,9 @@
 import secrets
 import numpy as np
+
 from base64 import b64decode, b64encode
 from galois import Poly
+from qiskit import transpile
 
 def bytes_to_int(string):
     """
@@ -94,6 +96,18 @@ def extend_matrix(matrix):
     matriz_gf2 = new_basis_matrix.vector() # Obtain the representation of each matrix element in the new field
     matriz_gf2 = np.transpose(matriz_gf2, (0, 2, 1)).reshape(final_shape) # Align dimensions
     return matriz_gf2.view(np.ndarray).astype(bool) # Return the extended matrix in Boolean format
+
+def simulate_statevector(circuit, simulator):
+    """
+    Simulates a quantum circuit and obtains its statevector.
+    :param circuit: The circuit to be simulated.
+    :param simulator: The simulator to be used for simulating the circuit.
+    :return: The statevector obtained from the simulator.
+    """
+    simulation_circuit = circuit.copy()
+    simulation_circuit.save_statevector()
+    result = simulator.run(transpile(simulation_circuit, backend=simulator)).result()
+    return result.get_statevector()
 
 def ask_int(question, error_message, condition):
     """
