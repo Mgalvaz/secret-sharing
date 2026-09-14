@@ -7,6 +7,7 @@ from qiskit_aer import AerSimulator
 
 from utils import extend_matrix, simulate_statevector
 
+
 class CGL:
     r"""
     Cleve-Gottesman-Lo quantum secret sharing scheme over the complex Hilbert space $\mathcal{H}_{2^m}$.

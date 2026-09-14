@@ -4,6 +4,7 @@ from galois import Poly, lagrange_poly, GF
 
 from utils import random_array, random_polynomial, bytes_to_int, int_to_bytes, int_to_b64str, b64str_to_int
 
+
 class Shamir:
     r"""
     Shamir's secret sharing scheme over the finite field $\mathbb{F}_{p^m}$.
