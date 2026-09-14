@@ -1,173 +1,176 @@
 import numpy as np
-from qiskit import QuantumCircuit, QuantumRegister, transpile
+from galois import GF
+from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.quantum_info import partial_trace
 from qiskit.circuit.library import LinearFunction
-from qiskit_aer import StatevectorSimulator
+from qiskit_aer import AerSimulator
 
-from utils import extend_matrix
+from utils import extend_matrix, simulate_statevector
 
-
-sim = StatevectorSimulator()
 class CGL:
     r"""
-    Esquema cuántico de compartición de secretos de Cleve-Gottesman-Lo sobre el espacio de Hilbert complejo $\mathcal{H}_{2^m}$.
+    Cleve-Gottesman-Lo quantum secret sharing scheme over the complex Hilbert space $\mathcal{H}_{2^m}$.
 
-    Ejemplo:
-        Crea un esquema de Cleve-Gottesman-Lo con parámetro r = 4 sobre $\mathcal{H}_{2^5}$ para los participantes ['a', 'b', 'c', 'd', 'e', 'f'].
+    Example:
+        Creates a Cleve-Gottesman-Lo scheme with reconstruction threshold r = 4 over $\mathcal{H}_{2^5}$ for the participants ['a', 'b', 'c', 'd', 'e', 'f'].
 
         .. ipython:: python
 
-            cuerpo = galois.GF(2, 5)
-            qss = CGL(cuerpo, 4, ['a', 'b', 'c', 'd', 'e', 'f'])
+            cgl = CGL(2**5, 4, ['a', 'b', 'c', 'd', 'e', 'f'])
     """
-    def __init__(self, cuerpo, r, participantes):
+    def __init__(self, order, r, participants, **backend_options):
         r"""
-        Crea un esquema de compartición de secretos de Cleve-Gottesman-Lo sobre el el espacio de Hilbert complejo $\mathcal{H}_{2^m}$.
-        :param cuerpo: El cuerpo finito que actúa como base del espacio de Hilbert sobre el que el esquema esta construido.
-        :param r: Parámetro de reconstrucción del esquema (número mínimo de participantes necesarios para reconstruir el secreto).
-        :param participantes: Lista de los identificadores únicos de cada participante del esquema.
+        Creates a Cleve-Gottesman-Lo quantum secret sharing scheme over the complex Hilbert space $\mathcal{H}_{2^m}$.
+        Quantum simulation done with AerSimulator using the statevector method.
+        Other run-time options for the simulator may be specified as kwargs.
+        :param order: The dimension of the Hilbert space.
+        :param r: The reconstruction threshold of the scheme, i.e., the minimum number of participants required to reconstruct the secret.
+        :param participants: A list containing the unique identifiers of all participants in the scheme.
         """
         # Condition checks
-        if cuerpo.characteristic != 2:
-            raise ValueError(f'El cuerpo introducido debe tener como elemento base el 2.')
-        if 2*r-1 < len(participantes):
-            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor o igual a 2*r-1 ({2*r-1}).')
-        if cuerpo.order <= 2*r-1:
-            raise ValueError(f'El numero de participantes totales ({2*r-1}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
-        if len(participantes) != len(set(participantes)):
-            raise ValueError(f'Se han encontrado participantes duplicados.')
+        if order.bit_count() != 1:
+            raise ValueError('The dimension of the Hilbert space must be a power of 2.')
+        if 2*r-1 < len(participants):
+            raise ValueError(f'The number of participants ({len(participants)}) must be less than or equal to 2r - 1 ({2 * r - 1}).')
+        if order <= 2*r-1:
+            raise ValueError(f'The total number of evaluation points ({2 * r - 1}) must be smaller than the dimension of the Hilbert space ({order}).')
+        if len(participants) != len(set(participants)):
+            raise ValueError('Duplicate participants were found.')
         if r < 2:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser mayor que 1.')
-        if len(participantes) < r:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
+            raise ValueError(f'The reconstruction threshold ({r}) must be greater than 1.')
+        if len(participants) < r:
+            raise ValueError(f'The reconstruction threshold ({r}) must be less than or equal to the number of participants ({len(participants)}).')
 
-        self.cuerpo = cuerpo
-        self.reconstruccion = r
-        self.__participaciones_anticipadas = []
-        self.elem_anticipadas_no_repartidas = []
-        self.__participacion_secreto_anticipado = None
-        participaciones_reales = [QuantumRegister(cuerpo.degree, participante) for participante in participantes]
-        participaciones_ficticias = [QuantumRegister(cuerpo.degree, f'p{i}') for i in range(len(participantes) + 1, 2 * r)]
-        self.__participaciones = participaciones_reales + participaciones_ficticias
-        self.__circuito = QuantumCircuit(*self.__participaciones)
-        self.participantes_numero = {nombre: i for i, nombre in enumerate(participantes, 1)}
+        self.sim = AerSimulator(method='statevector', **backend_options)
+        self.field = GF(order)
+        self.reconstruction = r
+        self.__advance_shares = []
+        self.x_advance_remaining = []
+        self.__secret_register = None
+        actual_shares = [QuantumRegister(self.field.degree, participant) for participant in participants]
+        dummy_shares = [QuantumRegister(self.field.degree, f'p{i}') for i in range(len(participants) + 1, 2 * r)]
+        self.__all_shares = actual_shares + dummy_shares
+        self.__circuit = QuantumCircuit(*self.__all_shares)
+        self.participants_number = {name: i for i, name in enumerate(participants, 1)}
 
-    def advance_sharing(self, participantes_anticipados):
+    def advance_sharing(self, advance_participants):
         """
-        Crea participaciones anticipadas para cada participante especificado.
-        Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.
-        :param participantes_anticipados: Listado de los participantes a entregar participaciones anticipadas.
-        :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
+        Creates advance shares for the specified participants.
+        Each share is represented by a quantum register whose name corresponds to the unique identifier of the participant receiving it.
+        Due to quantum limitations, this method can only be called once.
+        :param advance_participants: Sequence of participants that will receive advance shares.
+        :return: A list containing the quantum registers assigned to the specified participants.
         """
         # Condition checks
-        if self.__participaciones_anticipadas is None:
-            raise AttributeError(f'Ya se han repartido todas las participaciones.')
-        if self.__participacion_secreto_anticipado is not None:
-            raise AttributeError(f'Ya se han repartido las participaciones anticipadas.')
-        if len(participantes_anticipados) != len(set(participantes_anticipados)):
-            raise ValueError(f'Se han encontrado participantes duplicados.')
-        for nombre in participantes_anticipados:
-            if nombre not in self.participantes_numero:
-                raise ValueError(f"El participante '{nombre}' no está registrado.")
-        if self.reconstruccion <= len(participantes_anticipados):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - 1}).')
+        if self.__advance_shares is None:
+            raise AttributeError('All shares have already been distributed.')
+        if self.__secret_register is not None:
+            raise AttributeError('Advance sharing has already been performed.')
+        if len(advance_participants) != len(set(advance_participants)):
+            raise ValueError('Duplicate participants were found.')
+        for name in advance_participants:
+            if name not in self.participants_number:
+                raise ValueError(f"Participant '{name}' is not registered.")
+        if self.reconstruction <= len(advance_participants):
+            raise ValueError(f'The number of advance shares ({len(advance_participants)}) must be less than or equal to the privacy threshold ({self.reconstruction - 1}).')
 
-        qc = self.__circuito
-        r = self.reconstruccion
-        elem_anticipadas = [self.participantes_numero[nombre] for nombre in participantes_anticipados]
-        part_anticipadas = [self.__participaciones[idx - 1] for idx in elem_anticipadas]
-        elem_resto = np.setdiff1d(range(1, 2 * r), elem_anticipadas) # Elementos de todos los participantes no anticipados
-        resto = [self.__participaciones[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
-        no_entregadas = resto[:r - len(part_anticipadas) - 1]
-        psi1 = part_anticipadas + no_entregadas # Se amplian las participaciones anticipadas hasta ser r-1
-        psi2 = resto[r - len(part_anticipadas) - 1:-1] # Participaciones que no son anticipadas
-        self.__participacion_secreto_anticipado = resto[-1] # Participación en la que se inicializará el secreto
-        # Crear el estado máximamente entrelazado (sum |y>|y>)
+        qc = self.__circuit
+        r = self.reconstruction
+        x_advance = [self.participants_number[nombre] for nombre in advance_participants]
+        shares_advance = [self.__all_shares[idx - 1] for idx in x_advance]
+        x_not_advance = np.setdiff1d(range(1, 2 * r), x_advance) # Numbers associated to all participants who don't receive advance shares
+        shares_not_advance = [self.__all_shares[idx - 1] for idx in x_not_advance] # Shares of all participants who don't receive advance shares
+        undistributed_advance_shares = shares_not_advance[:r - len(shares_advance) - 1]
+        psi1 = shares_advance + undistributed_advance_shares # Extend advance shares to have r-1
+        psi2 = shares_not_advance[r - len(shares_advance) - 1:-1] # Not advance shares
+        self.__secret_register = shares_not_advance[-1] # Register where the secret will be initialized
+        # Create maximally entangled state (sum |y>|y>)
         for qudit_1, qudit_2 in zip(psi1, psi2):
             qc.h(qudit_1)
             qc.cx(qudit_1, qudit_2)
-        self.__participaciones_anticipadas = psi1
-        self.elem_anticipadas_no_repartidas = elem_resto[:r - len(part_anticipadas) - 1].astype(int)
-        return part_anticipadas
+        self.__advance_shares = psi1
+        self.x_advance_remaining = x_not_advance[:r - len(shares_advance) - 1].astype(int)
+        return shares_advance
 
-    def distribute(self, secreto):
+    def distribute(self, secret):
         """
-        Crea las participaciones de todos los participantes de acuerdo al secreto recibido.
-        Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.
-        Si se han distribuido participaciones anticipadas, las participaciones serán coherentes con las mismas.
-        :param secreto: Secreto que se quiere codificar entre todos los participantes.
-        :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
+        Creates the shares for all participants according to the given secret.
+        Each share is represented by a quantum register whose name corresponds to the unique identifier of the participant receiving it.
+        If advance sharing has been done, the generated shares will be consistent with advance shares.
+        :param secret: The quantum secret to be shared among the participants.
+        :return: A list containing the shares of all participants that did not receive an advance share.
         """
         # Condition checks
-        if self.__participaciones_anticipadas is None:
-            raise AttributeError(f'Ya se han repartido todas las participaciones.')
-        if not secreto.is_valid():
-            raise ValueError(f'No se ha introducido un estado cuántico válido.')
-        if secreto.dim != self.cuerpo.order:
-            raise ValueError(f'Se esperaba un vector de estado de dimensión {self.cuerpo.order}, pero se ha recibido uno de dimensión {secreto.dim}.')
+        if self.__advance_shares is None:
+            raise AttributeError('All shares have already been distributed.')
+        if not secret.is_valid():
+            raise ValueError('A valid quantum state was not provided.')
+        if secret.dim != self.field.order:
+            raise ValueError(f'A statevector of dimension {self.field.order} was expected, but a statevector of dimension {secret.dim} was provided.')
 
-        qc = self.__circuito
-        r = self.reconstruccion
+        qc = self.__circuit
+        r = self.reconstruction
         # Standard procedure
-        if len(self.__participaciones_anticipadas) == 0:
+        if len(self.__advance_shares) == 0:
             x = np.arange(1, 2*r)
-            qc.initialize(secreto, [self.__participaciones[0]])  # Inicializar el secreto
-            for participacion in self.__participaciones[1:r]:  # Superponer todos los posibles valores de los coeficientes del polinomio
-                qc.h(participacion)
-            # Evaluar en cada registro los polinomios en los elementos de los participantes
-            vandermonde = self.cuerpo(x)[:, None] ** np.arange(r)
-            matriz = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-1), np.zeros((r, r-1))])])) # Matriz de evaluación
-            matriz = extend_matrix(matriz)  # Extender la matriz de numeros de F_q a vectores de F_2
-            orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]  # Como qiskit es Little Endian, pero la matriz extendida está en Big Endian, hay que invertir el orden de los qubits de los participantes
+            qc.initialize(secret, [self.__all_shares[0]])  # Initialize the secret
+            for share in self.__all_shares[1:r]:  # Create a uniform superposition over all possible values of the polynomial coefficients
+                qc.h(share)
+            # Evaluate the polynomial at each participant's evaluation point
+            vandermonde = self.field(x)[:, None] ** np.arange(r)
+            matrix = self.field(np.column_stack([vandermonde, np.vstack([np.eye(r - 1), np.zeros((r, r - 1))])])) # Evaluation matrix
+            matrix = extend_matrix(matrix)  # Extend matrix from F_q numbers to F_2 vectors
+            participant_order = [qubit for share in self.__all_shares for qubit in reversed(share)]  # Qiskit uses little-endian ordering, whereas the extended matrix is represented in big-endian order.
         # Advance sharing
         else:
-            qc.initialize(secreto, self.__participacion_secreto_anticipado)
-            elem_anticipados = [self.participantes_numero[participacion.name] for participacion in self.__participaciones_anticipadas]
-            elem_resto = np.setdiff1d(range(1, 2*r), elem_anticipados) # Elementos de todos los participantes no anticipados
-            x = np.concat([elem_resto, self.elem_anticipadas_no_repartidas])
-            elem_anticipados = self.cuerpo(elem_anticipados + [0])
-            part_resto = [self.__participaciones[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
-            matriz_p1 = np.linalg.inv(elem_anticipados[:, None] ** np.arange(r))
-            matriz_p2 = self.cuerpo(elem_resto)[:, None] ** np.arange(r)
-            matriz = extend_matrix(matriz_p2 @ matriz_p1)
-            orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
-        qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
-        self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
-        # Generar el resto de las participaciones reales
-        return list(self.__participaciones[i-1] for i in x[x <= len(self.participantes_numero)])
+            qc.initialize(secret, self.__secret_register)
+            x_advance = [self.participants_number[share.name] for share in self.__advance_shares]
+            x_remaining = np.setdiff1d(range(1, 2*r), x_advance) # Numbers of all participants who don't have a share yet
+            x = np.concat([x_remaining, self.x_advance_remaining])
+            x_advance = self.field(x_advance + [0])
+            shares_remaining = [self.__all_shares[idx - 1] for idx in x_remaining] # Shares of all participants who don't have a share yet
+            matrix_s1 = np.linalg.inv(x_advance[:, None] ** np.arange(r))
+            matrix_s2 = self.field(x_remaining)[:, None] ** np.arange(r)
+            matrix = extend_matrix(matrix_s2 @ matrix_s1)
+            participant_order = [qubit for share in shares_remaining for qubit in reversed(share)]
 
-    def reconstruct(self, participaciones):
+        qc.append(LinearFunction(matrix), participant_order)  # Apply evaluation matrix
+        self.__advance_shares = None  # Delete the stored advance shares for further security
+        # Return the remaining actual participant shares
+        return list(self.__all_shares[i - 1] for i in x[x <= len(self.participants_number)])
+
+    def reconstruct(self, shares):
         """
-        Reconstruye el secreto codificado en las participaciones proporcionadas.
-        Cada participación es un registro cuántico (clase QuantumRegister) con el identificador único del participante al que le corresponde.
-        :param participaciones: Secuencia con las participaciones de los participantes que desean obtener el secreto.
-        :return: El secreto hasta una fase global.
+        Reconstructs the secret encoded in the provided shares.
+        Each share is represented by a quantum register whose name corresponds to the unique identifier of the participant providing it.
+        :param shares: Sequence containing the shares provided by the participants wishing to reconstruct the secret.
+        :return: The reconstructed secret up to a global phase.
         """
         # Condition checks
-        if self.__circuito is None:
-            raise AttributeError(f'Ya se ha realizado el procedimiento de decodificación.')
-        if self.__participaciones_anticipadas is not None:
-            raise AttributeError(f'Todavía no se ha realizado el procedimiento de codificación.')
-        if len(participaciones) < self.reconstruccion:
-            raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
-        if len(participaciones) != len(set(participaciones)):
-            raise ValueError(f'Se han encontrado participantes duplicados.')
-        conjunto_participaciones = set(self.__participaciones)
-        for participacion in participaciones:
-            if participacion not in conjunto_participaciones:
-                raise ValueError(f"El participante '{participacion.name}' no está registrado o ha entregado un qudit incorrecto.")
+        if self.__circuit is None:
+            raise AttributeError('The reconstruction procedure has already been performed.')
+        if self.__advance_shares is not None:
+            raise AttributeError('The sharing procedure has not yet been performed.')
+        if len(shares) < self.reconstruction:
+            raise ValueError('Not enough shares were provided to recover the secret.')
+        if len(shares) != len(set(shares)):
+            raise ValueError('Duplicate participants were found.')
+        shares_set = set(self.__all_shares)
+        for share in shares:
+            if share not in shares_set:
+                raise ValueError(f"Participant '{share.name}' is not registered or provided an invalid quantum register.")
 
-        r = self.reconstruccion
-        qc = self.__circuito
-        # Obetener los elementos asociados a cada participante
-        elementos = self.cuerpo([self.participantes_numero[participacion.name] for participacion in participaciones[:r]])
-        elementos_resto = self.cuerpo(np.setdiff1d(np.arange(2*r), elementos))
-        orden_participantes = [qubit for participacion in participaciones[:r] for qubit in reversed(participacion)]
-        matriz_p1 = np.linalg.inv(elementos[:,None]**np.arange(r)) # Matriz del primer paso del procediemiento de decodificacion
-        matriz_p2 = elementos_resto[:,None]**np.arange(r) # Matriz del segundo paso del procediemiento de decodificacion
-        matriz = extend_matrix(matriz_p2 @ matriz_p1)
-        qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
-        sv = sim.run(transpile(qc, backend=sim)).result().get_statevector()
-        elementos_traza = list(range((int(elementos[0])-1)*self.cuerpo.degree)) + list(range(int(elementos[0])*self.cuerpo.degree, (2*r-1)*self.cuerpo.degree))  # Posicion de los qubits a trazar
-        self.__circuito = None  # Indicar que ya se ha realizado el procedimiento de decodificación
-        return partial_trace(sv, elementos_traza).to_statevector()
+        r = self.reconstruction
+        qc = self.__circuit
+        # Obtain the evaluation points associated with the participants
+        x_reconstruct = self.field([self.participants_number[share.name] for share in shares[:r]])
+        x_remaining = self.field(np.setdiff1d(np.arange(2 * r), x_reconstruct))
+        participant_order = [qubit for share in shares[:r] for qubit in reversed(share)]
+        matrix_s1 = np.linalg.inv(x_reconstruct[:,None] ** np.arange(r)) # Reconstruction procedure first step matrix
+        matrix_s2 = x_remaining[:,None] ** np.arange(r) # Reconstruction procedure second step matrix
+        matrix = extend_matrix(matrix_s2 @ matrix_s1)
+        qc.append(LinearFunction(matrix), participant_order) # Perform both steps at the same time
+        sv = simulate_statevector(qc, self.sim)
+        trace_indices = list(range((int(x_reconstruct[0]) - 1) * self.field.degree)) + list(range(int(x_reconstruct[0]) * self.field.degree, (2 * r - 1) * self.field.degree))  # Position of the qubits to trace
+        self.__circuit = None  # Mark the reconstruction procedure as completed
+        return partial_trace(sv, trace_indices).to_statevector()

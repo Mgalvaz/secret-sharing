@@ -1,5 +1,4 @@
 from quantum_schemes import CGL, Ogawa, ZhangMatsumoto
-from galois import GF
 from qiskit.quantum_info import Statevector
 from numpy.linalg import norm
 import ast
@@ -35,14 +34,14 @@ def pedir_secreto(dimension, n=-1):
 
 def programa_cuantico():
     # Pedir datos del esquema
-    cuerpo =  GF(2, 3)
+    order =  2**3
 
     l = ask_int('Escriba el número de secretos que se desea compartir: ', f'El número de secretos debe ser al menos 1.',
                 lambda x: 1 <= x)
 
     r = ask_int('Escriba número de participantes necesarios para recuperar el secreto: ',
-                f'El número de participantes necesarios para recuperar el secreto debe ser mayor que la longitud del secreto y menor que el orden del cuerpo de trabajo menos la longitud del secreto entre 2 ({(cuerpo.order + l + 1) // 2})',
-                lambda x: l < x < (cuerpo.order + l + 1) // 2)
+                f'El número de participantes necesarios para recuperar el secreto debe ser mayor que la longitud del secreto y menor que el orden del cuerpo de trabajo menos la longitud del secreto entre 2 ({(order + l + 1) // 2})',
+                lambda x: l < x < (order + l + 1) // 2)
 
     # Pedir participantes
     n = ask_int('Escriba el número de particiantes: ',
@@ -57,19 +56,19 @@ def programa_cuantico():
 
     # Preguntar por el esquema que se desea usar
     if l == 1:
-        ss = CGL(cuerpo, r, participantes)
+        ss = CGL(order, r, participantes)
     else:
         print('¿Cual de los dos siguientes esquemas desea realizar?\n1.- Esquema de Ogawa et al.\n2.- Esquema de Zhang-Matsumoto.')
         esq = ask_int('Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if esq == 1:
-            ss = Ogawa(cuerpo, r, l, participantes)
+            ss = Ogawa(order, r, l, participantes)
         else:
-            if 2*r > cuerpo.order:
+            if 2*r > order:
                 print('Debido a que el número de participantes totales es mayor que el orden del cuerpo menos la longitud del secreto, no se puede realizar el esquema de Zhang-Matsumoto, se procede con el esquema de Ogawa et al.')
                 print()
-                ss = Ogawa(cuerpo, r, l, participantes)
+                ss = Ogawa(order, r, l, participantes)
             else:
-                ss = ZhangMatsumoto(cuerpo, r, l, participantes)
+                ss = ZhangMatsumoto(order, r, l, participantes)
 
     # Preguntar por participaciones anticipadas
     yn = input('¿Desea repartir participaciones anticipadas? (y/n): ')
@@ -100,16 +99,16 @@ def programa_cuantico():
 
     # Pedir el secreto y codificarlo
     if l == 1:
-        secreto = pedir_secreto(cuerpo.order)
+        secreto = pedir_secreto(order)
     else:
         print('¿Desea introducir el vector de estado compuesto o cada uno de los subsistemas?\n1.- Vector de estado global.\n2.- Separar por subsistemas.')
         elec = ask_int(f'Respuesta: ', f'No se ha introducido un numero válido.', lambda x: 1 <= x <= 2)
         if elec == 1:
-            secreto = pedir_secreto(cuerpo.order**l)
+            secreto = pedir_secreto(order**l)
         else:
             secreto = Statevector([1]) # Inicializamos el secreto
             for i in range(1,l+1):
-                sec_i = pedir_secreto(cuerpo.order, i)
+                sec_i = pedir_secreto(order, i)
                 secreto = secreto.tensor(sec_i)
 
     # Crear participaciones
@@ -139,7 +138,7 @@ def programa_cuantico():
 
     # Reconstruir el secreto
     secreto = ss.reconstruct(registros)
-    secreto = Statevector(secreto, dims=tuple(cuerpo.order for _ in range(l)))
+    secreto = Statevector(secreto, dims=tuple(order for _ in range(l)))
     print('Secreto:', secreto.to_dict())
 
 if __name__ == '__main__':
