@@ -1,28 +1,28 @@
-# Compartición de secretos
+# Secret Sharing
 
-Implementación en Python de diversos esquemas lineales de compartición de secretos, incluyendo esquemas clásicos y cuánticos, tanto de umbral como en rampa.
+Python implementation of several linear secret sharing schemes, including classical and quantum schemes, both threshold and ramp schemes.
 
-Además, todos los esquemas implementados incluyen la variante de compartición anticipada, que permite distribuir algunas participaciones antes de conocer el secreto.
+In addition, all implemented schemes support advance sharing, allowing some shares to be distributed before the secret is known.
 
-## Características
+## Features
 
-- Implementación de los esquemas clásicos de Shamir, Shamir en rampa, McEliece-Sarwate y una versión simplificada para los esquemas de umbral.
-- Implementación de los esquemas cuánticos de Cleve-Gottesman-Lo, Ogawa et al. y Zhang-Matsumoto.
-- Soporte para compartición anticipada integrado en todos los esquemas.
-- Interfaz unificada para todos los algoritmos implementados.
+- Implementation of the Additive, Shamir, Shamir ramp and McEliece-Sarwate classical secret sharing schemes.
+- Implementation of the Cleve-Gottesman-Lo, Ogawa et al., and Zhang-Matsumoto quantum secret sharing schemes.
+- Built-in support for advance sharing across all schemes.
+- Unified interface for all implemented algorithms.
 
 ---
 
-## Stack tecnológico
+## Technology Stack
 
-El proyecto utiliza las siguientes librerías principales:
+The project uses the following main libraries:
 
-| Categoría           | Librería     |
+| Category            | Library      |
 |---------------------|--------------|
-| Cálculo numérico    | [NumPy]      |
-| Cuerpos finitos     | [galois]     |
-| Circuitos Cuánticos | [Qiskit]     |
-| Simulación cuántica | [Qiskit Aer] |
+| Numerical Computing | [NumPy]      |
+| Finite Fields       | [galois]     |
+| Quantum Computing   | [Qiskit]     |
+| Quantum Simulation  | [Qiskit Aer] |
 
 
 [NumPy]:  https://github.com/numpy/numpy
@@ -30,7 +30,7 @@ El proyecto utiliza las siguientes librerías principales:
 [Qiskit]: https://github.com/Qiskit/qiskit
 [Qiskit Aer]: https://github.com/Qiskit/qiskit-aer
 
-La instalación de las dependencias se puede realizar ejecutando el siguiente comando.
+The project dependencies can be installed by running:
 
 ```bash
 pip install -r requirements.txt
@@ -38,11 +38,11 @@ pip install -r requirements.txt
 
 ---
 
-## Realización de los esquemas
+## Using the Schemes
 
-Todas las clases creadas cuentan con tres métodos para realizar los esquemas. 
+All scheme classes provide three main methods for performing the secret sharing procedure.
 
-Antes de nada se debe construir un objeto de la clase correspondiente.
+First, an instance of the corresponding scheme must be created.
 
 ```python
 import galois
@@ -51,30 +51,30 @@ from classic_schemes import Shamir
 scheme = Shamir(2**30, 3, ['Alice', 'Bob', 'Charles', 'Daisy'])
 ```
 
-Si se desea realizar compartición anticipada, se debe llamar al método `comparticion_anticipada` con los participantes correspondientes.
+If advance sharing is desired, the `advance_sharing()` method can be called with the corresponding participants.
 
 ```python
 advance = scheme.advance_sharing('Bob')
 ```
 
-Independientemente de si se ha realizado la compartición anticipada o no, en caso de querer compartir un secreto se debe llamar al método `codificacion`.
+Regardless of whether shares have been advance shared, the `distribute()` method is used to distribute a secret.
 
 ```python
 shares = scheme.distribute(b'672')
 ```
-**Nota:** En caso de haber distribuido participaciones de forma anticipada, estas **no** volverán a devolverse durante la codificación.
+**Note**: If shares have been advance shared, they will **not** be returned again by the `distribute()` method.
 
-Finalmente, cualquier conjunto de tres o más participantes puede reconstruir el secreto.
+Finally, any set of at least three participants can reconstruct the secret.
 
 ```python
-secreto = scheme.reconstruct([advance[0], shares[1], shares[0]])
+secret = scheme.reconstruct([advance[0], shares[1], shares[0]])
 ```
 
-### _Script_ interactivo
+### Interactive Script
 
-También se proporciona un _script_ interactivo que guía al usuario durante la ejecución del esquema, solicitando por terminal todos los parámetros necesarios.
+An interactive script is also provided to guide the user through the execution of a scheme by requesting all required parameters through the terminal.
 
-Este _script_ se puede iniciar mediante el siguiente comando.
+The script can be started with:
 
 ```bash
 python main.py
