@@ -1,60 +1,62 @@
 import numpy as np
+from galois import GF
 from qiskit import QuantumCircuit, QuantumRegister, transpile
 from qiskit.quantum_info import partial_trace
 from qiskit.circuit.library import LinearFunction
-from qiskit_aer import StatevectorSimulator
+from qiskit_aer import AerSimulator
 
-from utils import extend_matrix
+from utils import extend_matrix, simulate_statevector
 
 
-sim = StatevectorSimulator()
 class Ogawa:
     r"""
-    Esquema cuántico de compartición de secretos de Ogawa et al. sobre el espacio de Hilbert complejo $\mathcal{H}_{2^m}$.
+    Ogawa et al. quantum ramp secret sharing scheme over the complex Hilbert space $\mathcal{H}_{2^m}$.
 
-    Ejemplo:
-        Crea un esquema de Ogawa et al. con parámetros r = 4 y l = 3 sobre $\mathcal{H}_{2^5}$ para los participantes ['a', 'b', 'c', 'd', 'e'].
+    Example:
+        Creates an Ogawa et al. scheme with reconstruction threshold r = 4 and secret length l = 3 over $\mathcal{H}_{2^5}$ for the participants ['a', 'b', 'c', 'd', 'e'].
 
         .. ipython:: python
 
-            cuerpo = galois.GF(2, 5)
-            qss = Ogawa(cuerpo, 4, 3, ['a', 'b', 'c', 'd', 'e'])
+            ogawa = Ogawa(2**5, 4, 3, ['a', 'b', 'c', 'd', 'e'])
     """
-    def __init__(self, cuerpo, r, l, participantes):
+    def __init__(self, order, r, l, participants, **backend_options):
         r"""
-        Crea un esquema de compartición de secretos de Ogawa et al. sobre el el espacio de Hilbert complejo $\mathcal{H}_{2^m}$.
-        :param cuerpo: El cuerpo finito que actúa como base del espacio de Hilbert sobre el que el esquema esta construido.
-        :param r: Parámetro de reconstrucción del esquema (número mínimo de participantes necesarios para reconstruir el secreto).
-        :param l: Longitud del secreto que se quiere repartir.
-        :param participantes: Lista de los identificadores únicos de cada participante del esquema.
+        Creates an Ogawa et al. quantum secret sharing scheme over the complex Hilbert space $\mathcal{H}_{2^m}$.
+        Quantum simulation done with AerSimulator using the statevector method.
+        Other run-time options for the simulator may be specified as kwargs.
+        :param order: The dimension of the Hilbert space.
+        :param r: The reconstruction threshold of the scheme, i.e., the minimum number of participants required to reconstruct the secret.
+        :param l: The length of the secret to be shared.
+        :param participants: A list containing the unique identifiers of all participants in the scheme.
         """
         # Condition checks
-        if cuerpo.characteristic != 2:
-            raise ValueError(f'El cuerpo introducido debe tener como elemento base el 2.')
-        if 2*r-l < len(participantes):
-            raise ValueError(f'El numero de participantes ({len(participantes)}) debe ser menor o igual a 2*r-l ({2*r-l}).')
-        if cuerpo.order <= 2*r-l:
-            raise ValueError(f'El numero de participantes totales ({2*r-l}) debe ser menor que el orden del cuerpo de trabajo ({cuerpo.order}).')
-        if len(participantes) != len(set(participantes)):
-            raise ValueError(f'Se han encontrado participantes duplicados.')
+        if order.bit_count() != 1:
+            raise ValueError('The dimension of the Hilbert space must be a power of 2.')
+        if 2*r-l < len(participants):
+            raise ValueError(f'The number of participants ({len(participants)}) must be less than or equal to 2r - l ({2 * r - l}).')
+        if order.order <= 2*r-l:
+            raise ValueError(f'The total number of evaluation points ({2 * r - l}) must be smaller than the dimension of the Hilbert space ({order}).')
+        if len(participants) != len(set(participants)):
+            raise ValueError('Duplicate participants were found.')
         if l < 2:
-            raise ValueError(f'La longitud del secreto ({l}) debe ser mayor que 1.')
+            raise ValueError(f'The secret length ({l}) must be greater than 1.')
         if r <= l:
-            raise ValueError(f'La longitud del secreto ({l}) debe ser menor que el parámetro de reconstrucción ({r}).')
-        if len(participantes) < r:
-            raise ValueError(f'El parámetro de reconstrucción ({r}) debe ser menor o igual que el número de participantes ({len(participantes)}).')
+            raise ValueError(f'The secret length ({l}) must be less than the reconstruction threshold ({r}).')
+        if len(participants) < r:
+            raise ValueError(f'The reconstruction threshold ({r}) must be less than or equal to the number of participants ({len(participants)}).')
 
-        self.cuerpo = cuerpo
-        self.reconstruccion = r
-        self.longitud_secreto = l
-        self.__participaciones_anticipadas = []
-        self.elem_anticipadas_no_repartidas = []
-        self.__participaciones_secreto_anticipado = None
-        participaciones_reales = [QuantumRegister(cuerpo.degree, participante) for participante in participantes]
-        participaciones_ficticias = [QuantumRegister(cuerpo.degree, f'p{i}') for i in range(len(participantes) + 1, 2 * r - l + 1)]
-        self.__participaciones = participaciones_reales + participaciones_ficticias
-        self.__circuito = QuantumCircuit(*self.__participaciones)
-        self.participantes_numero = {nombre: i for i, nombre in enumerate(participantes, 1)}
+        self.sim = AerSimulator(method='statevector', **backend_options)
+        self.field = GF(order)
+        self.reconstruction = r
+        self.secret_length = l
+        self.__advance_shares = []
+        self.x_advance_remaining = []
+        self.__secret_register = None
+        actual_shares = [QuantumRegister(self.field.degree, name) for name in participants]
+        dummy_shares = [QuantumRegister(self.field.degree, f'p{i}') for i in range(len(participants) + 1, 2 * r - l + 1)]
+        self.__all_shares = actual_shares + dummy_shares
+        self.__circuit = QuantumCircuit(*self.__all_shares)
+        self.participants_number = {name: i for i, name in enumerate(participants, 1)}
 
     def advance_sharing(self, participantes_anticipados):
         """
@@ -64,35 +66,35 @@ class Ogawa:
         :return: Una lista que contienene las participaciones anticipadas asignadas a cada participante especificado.
         """
         # Condition checks
-        if self.__participaciones_anticipadas is None:
+        if self.__advance_shares is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
-        if self.__participaciones_secreto_anticipado is not None:
+        if self.__secret_register is not None:
             raise AttributeError(f'Ya se han repartido las participaciones anticipadas.')
         if len(participantes_anticipados) != len(set(participantes_anticipados)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
         for nombre in participantes_anticipados:
-            if nombre not in self.participantes_numero:
+            if nombre not in self.participants_number:
                 raise ValueError(f"El participante '{nombre}' no está registrado.")
-        if self.reconstruccion - self.longitud_secreto < len(participantes_anticipados):
-            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruccion - self.longitud_secreto}).')
+        if self.reconstruction - self.secret_length < len(participantes_anticipados):
+            raise ValueError(f'El numero de participaciones anticipadas ({len(participantes_anticipados)}) debe ser menor o igual que el parámetro de privacidad ({self.reconstruction - self.secret_length}).')
 
-        qc = self.__circuito
-        r = self.reconstruccion
-        l = self.longitud_secreto
-        elem_anticipadas = [self.participantes_numero[nombre] for nombre in participantes_anticipados]
-        part_anticipadas = [self.__participaciones[idx - 1] for idx in elem_anticipadas]
+        qc = self.__circuit
+        r = self.reconstruction
+        l = self.secret_length
+        elem_anticipadas = [self.participants_number[nombre] for nombre in participantes_anticipados]
+        part_anticipadas = [self.__all_shares[idx - 1] for idx in elem_anticipadas]
         elem_resto = np.setdiff1d(range(1, 2*r-l+1), elem_anticipadas) # Elementos de todos los participantes no anticipados
-        resto = [self.__participaciones[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
+        resto = [self.__all_shares[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
         no_entregadas = resto[:r - len(part_anticipadas) - l]
         psi1 = part_anticipadas + no_entregadas # Se amplian las participaciones anticipadas hasta ser r-l
         psi2 = resto[r - len(part_anticipadas) - l:-l] # Participaciones que no son anticipadas
-        self.__participaciones_secreto_anticipado = resto[-l:] # Participación en la que se inicializará el secreto
+        self.__secret_register = resto[-l:] # Participación en la que se inicializará el secreto
         # Crear el estado máximamente entrelazado (sum |y>|y>)
         for qudit_1, qudit_2 in zip(psi1, psi2):
             qc.h(qudit_1)
             qc.cx(qudit_1, qudit_2)
-        self.__participaciones_anticipadas = psi1
-        self.elem_anticipadas_no_repartidas = elem_resto[:r - len(part_anticipadas) - l].astype(int)
+        self.__advance_shares = psi1
+        self.x_advance_remaining = elem_resto[:r - len(part_anticipadas) - l].astype(int)
         return part_anticipadas
 
     def distribute(self, secreto):
@@ -104,43 +106,43 @@ class Ogawa:
         :return: Una lista que contienene las participaciones de cada participante que no ha participado en la distribución anticipada.
         """
         # Condition checks
-        if self.__participaciones_anticipadas is None:
+        if self.__advance_shares is None:
             raise AttributeError(f'Ya se han repartido todas las participaciones.')
         if not secreto.is_valid():
             raise ValueError(f'No se ha introducido un estado cuántico válido.')
-        if secreto.dim != self.cuerpo.order**self.longitud_secreto:
-            raise ValueError(f'Se esperaba un vector de estado de dimensión {self.cuerpo.order**self.longitud_secreto}, pero se ha recibido uno de dimensión {secreto.dim}.')
+        if secreto.dim != self.field.order**self.secret_length:
+            raise ValueError(f'Se esperaba un vector de estado de dimensión {self.field.order ** self.secret_length}, pero se ha recibido uno de dimensión {secreto.dim}.')
 
-        qc = self.__circuito
-        r = self.reconstruccion
-        l = self.longitud_secreto
+        qc = self.__circuit
+        r = self.reconstruction
+        l = self.secret_length
         # Standard procedure
-        if len(self.__participaciones_anticipadas) == 0:
+        if len(self.__advance_shares) == 0:
             x = np.arange(1, 2*r-l+1)
-            qc.initialize(secreto, self.__participaciones[:l])  # Inicializar el secreto
-            for participacion in self.__participaciones[l:r]:  # Superponer todos los posibles valores de los coeficientes del polinomio
+            qc.initialize(secreto, self.__all_shares[:l])  # Inicializar el secreto
+            for participacion in self.__all_shares[l:r]:  # Superponer todos los posibles valores de los coeficientes del polinomio
                 qc.h(participacion)
             # Evaluar en cada registro los polinomios en los elementos de los participantes
-            vandermonde = self.cuerpo(x)[:, None] ** np.arange(r)
-            matriz = self.cuerpo(np.column_stack([vandermonde, np.vstack([np.eye(r-l), np.zeros((r, r-l))])]))
+            vandermonde = self.field(x)[:, None] ** np.arange(r)
+            matriz = self.field(np.column_stack([vandermonde, np.vstack([np.eye(r - l), np.zeros((r, r - l))])]))
             matriz = extend_matrix(matriz)
-            orden_participantes = [qubit for participacion in self.__participaciones for qubit in reversed(participacion)]
+            orden_participantes = [qubit for participacion in self.__all_shares for qubit in reversed(participacion)]
         # Advance sharing
         else:
-            qc.initialize(secreto, self.__participaciones_secreto_anticipado)
-            elem_anticipados = [self.participantes_numero[participacion.name] for participacion in self.__participaciones_anticipadas]
+            qc.initialize(secreto, self.__secret_register)
+            elem_anticipados = [self.participants_number[participacion.name] for participacion in self.__advance_shares]
             elem_resto = np.setdiff1d(range(1, 2*r-l+1), elem_anticipados) # Elementos de todos los participantes no anticipados
-            x = np.concat([elem_resto, self.elem_anticipadas_no_repartidas])
-            part_resto = [self.__participaciones[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
-            vandermonde = self.cuerpo(elem_anticipados)[:, None] ** np.arange(r)
-            matriz_p1 = np.linalg.inv(self.cuerpo(np.vstack([vandermonde, np.column_stack([np.eye(l), np.zeros((l, r-l))])])))
-            matriz_p2 = self.cuerpo(elem_resto)[:, None] ** np.arange(r)
+            x = np.concat([elem_resto, self.x_advance_remaining])
+            part_resto = [self.__all_shares[idx - 1] for idx in elem_resto] # Participaciones de todos los participantes no anticipados
+            vandermonde = self.field(elem_anticipados)[:, None] ** np.arange(r)
+            matriz_p1 = np.linalg.inv(self.field(np.vstack([vandermonde, np.column_stack([np.eye(l), np.zeros((l, r - l))])])))
+            matriz_p2 = self.field(elem_resto)[:, None] ** np.arange(r)
             matriz = extend_matrix(matriz_p2 @ matriz_p1)
             orden_participantes = [qubit for participacion in part_resto for qubit in reversed(participacion)]
         qc.append(LinearFunction(matriz), orden_participantes)  # Aplicar matriz de evaluación
-        self.__participaciones_anticipadas = None  # Eliminación de las participaciones anticipadas para mayor seguridad
+        self.__advance_shares = None  # Eliminación de las participaciones anticipadas para mayor seguridad
         # Generar el resto de las participaciones reales
-        return list(self.__participaciones[i-1] for i in x[x <= len(self.participantes_numero)])
+        return list(self.__all_shares[i - 1] for i in x[x <= len(self.participants_number)])
 
     def reconstruct(self, participaciones):
         """
@@ -150,35 +152,35 @@ class Ogawa:
         :return: El secreto hasta una fase global.
         """
         # Condition checks
-        if self.__circuito is None:
+        if self.__circuit is None:
             raise AttributeError(f'Ya se ha realizado el procedimiento de decodificación.')
-        if self.__participaciones_anticipadas is not None:
+        if self.__advance_shares is not None:
             raise AttributeError(f'Todavía no se ha realizado el procedimiento de codificación.')
-        if len(participaciones) < self.reconstruccion:
+        if len(participaciones) < self.reconstruction:
             raise ValueError('No se han proporcionado suficientes participaciones para recuperar el secreto.')
         if len(participaciones) != len(set(participaciones)):
             raise ValueError(f'Se han encontrado participantes duplicados.')
-        conjunto_participaciones = set(self.__participaciones)
+        conjunto_participaciones = set(self.__all_shares)
         for participacion in participaciones:
             if participacion not in conjunto_participaciones:
                 raise ValueError(f"El participante '{participacion.name}' no está registrado o ha entregado un qudit incorrecto.")
 
-        r = self.reconstruccion
-        l = self.longitud_secreto
-        qc = self.__circuito
+        r = self.reconstruction
+        l = self.secret_length
+        qc = self.__circuit
         # Obetener los elementos asociados a cada participante. Es necesario ordenar para que al hacer la traza parcial se mantenga el orden del secreto
-        participaciones_ordenadas = sorted(participaciones[:r], key=lambda p: self.participantes_numero[p.name])
-        elementos_ordenados = [self.participantes_numero[participacion.name] for participacion in participaciones_ordenadas]
+        participaciones_ordenadas = sorted(participaciones[:r], key=lambda p: self.participants_number[p.name])
+        elementos_ordenados = [self.participants_number[participacion.name] for participacion in participaciones_ordenadas]
         elementos_resto = np.setdiff1d(np.arange(1,2*r-l+1), elementos_ordenados)
         orden_participantes = [qubit for participacion in participaciones_ordenadas for qubit in reversed(participacion)]
-        matriz_p1 = np.linalg.inv(self.cuerpo(elementos_ordenados)[:, None] ** np.arange(r)) # Matriz del primer paso del procedimiento de decodificacion
-        vandermonde = self.cuerpo(elementos_resto)[:,None]**np.arange(r)
-        matriz_p2 = self.cuerpo(np.vstack([np.column_stack([np.eye(l), np.zeros((l, r-l))]), vandermonde])) # Matriz del segundo paso del procedimiento de decodificacion
+        matriz_p1 = np.linalg.inv(self.field(elementos_ordenados)[:, None] ** np.arange(r)) # Matriz del primer paso del procedimiento de decodificacion
+        vandermonde = self.field(elementos_resto)[:,None] ** np.arange(r)
+        matriz_p2 = self.field(np.vstack([np.column_stack([np.eye(l), np.zeros((l, r - l))]), vandermonde])) # Matriz del segundo paso del procedimiento de decodificacion
         matriz = extend_matrix(matriz_p2 @ matriz_p1)
         qc.append(LinearFunction(matriz), orden_participantes) # Realizar los dos pasos en uno
         sv = sim.run(transpile(qc, backend=sim)).result().get_statevector()
-        elementos_traza = np.setdiff1d(range((2*r-l)*self.cuerpo.degree), np.concatenate([range((i-1)*self.cuerpo.degree, i*self.cuerpo.degree) for i in elementos_ordenados[:l]])) # Posicion de los qubits a trazar
-        self.__circuito = None  # Indicar que ya se ha realizado el procedimiento de decodificación
+        elementos_traza = np.setdiff1d(range((2*r-l) * self.field.degree), np.concatenate([range((i - 1) * self.field.degree, i * self.field.degree) for i in elementos_ordenados[:l]])) # Posicion de los qubits a trazar
+        self.__circuit = None  # Indicar que ya se ha realizado el procedimiento de decodificación
         return partial_trace(sv, elementos_traza.tolist()).to_statevector()
 
 class ZhangMatsumoto:
