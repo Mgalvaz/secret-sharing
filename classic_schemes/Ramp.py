@@ -105,14 +105,14 @@ class RampShamir:
             # Determine a polynomial of degree r-1 consistent with the advance shares
             polynomial_s = Poly(secret_int, field=self.field, order='asc') # f_s
             lagrange = lagrange_poly(x_advance, (y_advance - polynomial_s(x_advance)) / x_advance ** self.secret_length)
-            if len(x_advance) < self.reconstruction - self.secret_length:  # If the number of advance shares is less than r-l, the polynomial must be inserted with randomness
+            if len(x_advance) < self.reconstruction - self.secret_length: # If the number of advance shares is less than r-l, the polynomial must be inserted with randomness
                 polynomial = lagrange + Poly.Roots(x_advance, field=self.field) * random_polynomial(self.field, self.reconstruction - self.secret_length - len(x_advance) - 1)
-            else:  # If not, the only possible polynomial is Lagrange's
+            else: # If not, the only possible polynomial is Lagrange's
                 polynomial = lagrange
             # Generate remaining shares
             shares_b64 = int_to_b64str(polynomial_s(x) + self.field(x) ** self.secret_length * polynomial(x), self.byte_length)
 
-        self.__advance_shares = None  # Delete the stored advance shares for further security
+        self.__advance_shares = None # Delete the stored advance shares for further security
         return list(zip(self.participants_name[x], shares_b64))
 
     def reconstruct(self, shares):
@@ -253,14 +253,14 @@ class McElieceSarwate:
             x_lagrange = self.field(np.concatenate([alpha, x_advance]))
             y_lagrange = self.field(np.concatenate([secret_int, y_advance]))
             lagrange = lagrange_poly(x_lagrange, y_lagrange)
-            if len(x_advance) < self.reconstruction - self.secret_length:  # If fewer than r-l padvance shares are available, complete the polynomial with randomness
+            if len(x_advance) < self.reconstruction - self.secret_length: # If fewer than r-l padvance shares are available, complete the polynomial with randomness
                 polynomial = lagrange + Poly.Roots(np.concatenate([alpha, x_advance]), field=self.field) * random_polynomial(self.field, self.reconstruction - self.secret_length - len(x_advance) - 1)
-            else:  # Otherwise, the Lagrange polynomial is the only possible one
+            else: # Otherwise, the Lagrange polynomial is the only possible one
                 polynomial = lagrange
 
         # Generate the remaining shares
         shares_b64 = int_to_b64str(polynomial(x), self.byte_length)
-        self.__advance_shares = None  # Delete the stored advance shares for further security
+        self.__advance_shares = None # Delete the stored advance shares for further security
         return list(zip(self.participants_name[x], shares_b64))
 
     def _alternative_reconstruct(self, shares):
@@ -303,14 +303,14 @@ class McElieceSarwate:
         x = self.field(list(self.participants_number[nombre] for nombre in names))
         y = self.field(b64str_to_int(values_b64))
         # Compute the value of the generating polynomial at 0, ..., l-1 without explicitly reconstructing it
-        mask = ~np.eye(self.reconstruction, dtype=bool)  # Mask for the x_h elements in the formula
+        mask = ~np.eye(self.reconstruction, dtype=bool) # Mask for the x_h elements in the formula
         coeffs = self.field.Zeros((self.secret_length, self.reconstruction)) # Where each l_i(a_j) will be stored (coeffs[j,i] = l_i(a_j))
         alphas = self.field.Range(0, self.secret_length)[:, None]
         for i in range(self.reconstruction):
-            numerator = np.prod(alphas - x[mask[i]], axis=1)  # Numerator product of each aj - xh
-            denominator = np.prod(x[i] - x[mask[i]])  # Denominator product of each xi - xh
-            coeffs[:, i] = numerator / denominator  # Calculate l_i
-        return int_to_bytes(np.sum(y * coeffs, axis=1))  # Return the sum of y_i * l_i(a_j)
+            numerator = np.prod(alphas - x[mask[i]], axis=1) # Numerator product of each aj - xh
+            denominator = np.prod(x[i] - x[mask[i]]) # Denominator product of each xi - xh
+            coeffs[:, i] = numerator / denominator # Calculate l_i
+        return int_to_bytes(np.sum(y * coeffs, axis=1)) # Return the sum of y_i * l_i(a_j)
 
     def _validate_names(self, names):
         """

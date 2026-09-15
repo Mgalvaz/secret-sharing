@@ -27,6 +27,7 @@ class CGL:
         :param order: The dimension of the Hilbert space.
         :param r: The reconstruction threshold of the scheme, i.e., the minimum number of participants required to reconstruct the secret.
         :param participants: A list containing the unique identifiers of all participants in the scheme.
+        :param backend_options: Additional options for the AerSimulator.
         """
         # Condition checks
         if order.bit_count() != 1:
@@ -114,14 +115,14 @@ class CGL:
         # Standard procedure
         if len(self.__advance_shares) == 0:
             x = np.arange(1, 2*r)
-            qc.initialize(secret, [self.__all_shares[0]])  # Initialize the secret
-            for share in self.__all_shares[1:r]:  # Create a uniform superposition over all possible values of the polynomial coefficients
+            qc.initialize(secret, [self.__all_shares[0]]) # Initialize the secret
+            for share in self.__all_shares[1:r]: # Create a uniform superposition over all possible values of the polynomial coefficients
                 qc.h(share)
             # Evaluate the polynomial at each participant's evaluation point
             vandermonde = self.field(x)[:, None] ** np.arange(r)
             matrix = self.field(np.column_stack([vandermonde, np.vstack([np.eye(r - 1), np.zeros((r, r - 1))])])) # Evaluation matrix
-            matrix = extend_matrix(matrix)  # Extend matrix from F_q numbers to F_2 vectors
-            participant_order = [qubit for share in self.__all_shares for qubit in reversed(share)]  # Qiskit uses little-endian ordering, whereas the extended matrix is represented in big-endian order.
+            matrix = extend_matrix(matrix) # Extend matrix from F_q numbers to F_2 vectors
+            participant_order = [qubit for share in self.__all_shares for qubit in reversed(share)] # Qiskit uses little-endian ordering, whereas the extended matrix is represented in big-endian order.
         # Advance sharing
         else:
             qc.initialize(secret, self.__secret_register)
@@ -135,8 +136,8 @@ class CGL:
             matrix = extend_matrix(matrix_s2 @ matrix_s1)
             participant_order = [qubit for share in shares_remaining for qubit in reversed(share)]
 
-        qc.append(LinearFunction(matrix), participant_order)  # Apply evaluation matrix
-        self.__advance_shares = None  # Delete the stored advance shares for further security
+        qc.append(LinearFunction(matrix), participant_order) # Apply evaluation matrix
+        self.__advance_shares = None # Delete the stored advance shares for further security
         # Return the remaining actual participant shares
         return list(self.__all_shares[i - 1] for i in x[x <= len(self.participants_number)])
 
@@ -172,6 +173,6 @@ class CGL:
         matrix = extend_matrix(matrix_s2 @ matrix_s1)
         qc.append(LinearFunction(matrix), participant_order) # Perform both steps at the same time
         sv = simulate_statevector(qc, self.sim)
-        trace_indices = list(range((int(x_reconstruct[0]) - 1) * self.field.degree)) + list(range(int(x_reconstruct[0]) * self.field.degree, (2 * r - 1) * self.field.degree))  # Position of the qubits to trace
-        self.__circuit = None  # Mark the reconstruction procedure as completed
+        trace_indices = list(range((int(x_reconstruct[0]) - 1) * self.field.degree)) + list(range(int(x_reconstruct[0]) * self.field.degree, (2 * r - 1) * self.field.degree)) # Position of the qubits to trace
+        self.__circuit = None # Mark the reconstruction procedure as completed
         return partial_trace(sv, trace_indices).to_statevector()

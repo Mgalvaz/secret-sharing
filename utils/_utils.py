@@ -86,7 +86,7 @@ def extend_matrix(matrix):
     :param matrix: A matrix over the field GF(2, m) to be extended.
     :return: The extended matrix over the base field GF(2).
     """
-    gf = type(matrix)  # Get the working field
+    gf = type(matrix) # Get the working field
     if gf.characteristic != 2:
         raise ValueError(f'A field with characteristic 2 was expected, but {gf.characteristic} was provided.')
     num_bits = gf.degree
@@ -122,7 +122,7 @@ def ask_int(question, error_message, condition):
             num = int(input(question))
         except ValueError:
             print('A valid number was not entered.')
-        else:  # Executed if no exception occurred
+        else: # Executed if no exception occurred
             if not condition(num):
                 print(error_message)
             else:

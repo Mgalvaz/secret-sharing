@@ -101,7 +101,7 @@ class Shamir:
 
         # Generate remaining shares
         shares_b64 = int_to_b64str(polynomial(x), self.byte_length)
-        self.__advance_shares = None  # Delete the stored advance shares for further security
+        self.__advance_shares = None # Delete the stored advance shares for further security
         return list(zip(self.participants_name[x], shares_b64))
 
     def _alternative_reconstruct(self, shares):
@@ -253,7 +253,7 @@ class Additive:
         shares = self.field(random_array(self.field.order, len(x) - 1))
         shares = np.append(shares, self.field(secret_int) - shares.sum() - advance_sum) # The last share is equal to the secret minus the sum of all preceding shares
         shares_b64 = int_to_b64str(shares, self.byte_length)
-        self.__advance_shares = None  # Delete the stored advance shares for further security
+        self.__advance_shares = None # Delete the stored advance shares for further security
         return list(zip(x, shares_b64))
 
     def reconstruct(self, shares):
